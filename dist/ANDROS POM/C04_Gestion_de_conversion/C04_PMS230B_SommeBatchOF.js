@@ -101,14 +101,14 @@ var C04_PMS230B_SommeBatchOF = /** @class */ (function () {
                     for (var _i = 0, _a = e.rows; _i < _a.length; _i++) {
                         var item = _a[_i];
                         _this.totalStandart += item.data["VHORQT"]
-                            ? parseFloat(item.data["VHORQT"])
+                            ? parseFloat(item.data["VHORQT"].toString().replace(",", "."))
                             : 0;
                     }
                     _this.totalBatch = 0;
                     for (var _b = 0, _c = e.rows; _b < _c.length; _b++) {
                         var item = _c[_b];
                         _this.totalBatch += item.data["VHPROJ"]
-                            ? parseFloat(item.data["VHPROJ"])
+                            ? parseFloat(item.data["VHPROJ"].toString().replace(",", "."))
                             : 0;
                     }
                     _this.$host.find("#Q_S").val(_this.totalStandart.toString());

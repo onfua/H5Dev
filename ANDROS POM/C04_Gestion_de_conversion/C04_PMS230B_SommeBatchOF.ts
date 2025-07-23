@@ -117,13 +117,13 @@ class C04_PMS230B_SommeBatchOF {
           this.totalStandart = 0;
           for (let item of e.rows) {
             this.totalStandart += item.data["VHORQT"]
-              ? parseFloat(item.data["VHORQT"])
+              ? parseFloat(item.data["VHORQT"].toString().replace(",", "."))
               : 0;
           }
           this.totalBatch = 0;
           for (let item of e.rows) {
             this.totalBatch += item.data["VHPROJ"]
-              ? parseFloat(item.data["VHPROJ"])
+              ? parseFloat(item.data["VHPROJ"].toString().replace(",", "."))
               : 0;
           }
           this.$host.find("#Q_S").val(this.totalStandart.toString());

@@ -73,6 +73,7 @@ var ARS190_Date_Echeance = /** @class */ (function () {
                             SEPC: '$',
                             QERY: "F1CONO, F1DIVI, F1JBNO, F1JBDT, F1JBTM, F1LITX from FSLGP1 where F1GPST = '0' and F1CONO = '".concat(this.CONO, "' and F1DIVI = '").concat(this.DIVI, "'")
                         };
+                        request.maxReturnedRecords = 0;
                         request.outputFields = ['REPL'];
                         _b.label = 1;
                     case 1:
@@ -103,6 +104,7 @@ var ARS190_Date_Echeance = /** @class */ (function () {
                             SEPC: '$',
                             QERY: "F2CONO, F2DIVI, F2JBNO, F2JBDT, F2JBTM, F2GRPA from FSLGP2 where F2CONO = '".concat(cono, "' and F2DIVI = '").concat(divi, "' and F2JBNO = '").concat(jbno, "' and F2JBDT = '").concat(jbdt, "' and F2JBTM = '").concat(jbtm, "'")
                         };
+                        request2.maxReturnedRecords = 0;
                         _b.label = 4;
                     case 4:
                         _b.trys.push([4, 12, , 13]);

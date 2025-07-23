@@ -11,6 +11,7 @@
  * 1.0.0   25-10-2024    JOEL        Initial Release
  * 1.0.1   20-11-2024    JOEL        Ajustement spécifique suite utilisation PROJ et ELNO
  * 1.0.2   12-12-2024    JOEL        Calcule en rendement
+ * 1.0.3   26-02-2025    JOEL        Ajout de la gestion des décimales
  */
 class C04_PMS010E_ConvertBatchOF {
   private controller: IInstanceController;
@@ -27,53 +28,55 @@ class C04_PMS010E_ConvertBatchOF {
   private BTNCLOSE_ID: string;
   private U_B: TextBoxElement | null;
   private Q_B: TextBoxElement | null;
-  private unsubscribeRequesting : any;
-  private unsubscribeRequested : any;
+  private unsubscribeRequesting: any;
+  private unsubscribeRequested: any;
+  private decimalFormat: string;
+  private decimalLength: number;
 
   private onRequesting(args: CancelRequestEventArgs): void {
     if (args.commandType === "KEY" && args.commandValue === "F12") {
-        const contentDialog = $(`<p>Merci de bien vouloir finaliser la reprogrammation et de vérifier les quantités batch</p>`)
-        const dialogBut = [
-          {
-            text : 'OK',
-            isDefault : true,
-            with : 80,
-            click : function (event : any, modal : any){
-              if (ScriptUtil.version >= 2.0){
-                modal.close(true)
-              }else{
-                $(this).inforDialog('close')
-              }
+      const contentDialog = $(`<p>Merci de bien vouloir finaliser la reprogrammation et de vérifier les quantités batch</p>`)
+      const dialogBut = [
+        {
+          text: 'OK',
+          isDefault: true,
+          with: 80,
+          click: function (event: any, modal: any) {
+            if (ScriptUtil.version >= 2.0) {
+              modal.close(true)
+            } else {
+              $(this).inforDialog('close')
             }
           }
-        ]
-        const dialogOption = {
-          title : 'Information',
-          dialogType : 'General',
-          modal : true,
-          width : 600,
-          minHeight : 480,
-          icon : 'info',
-          closeOnEscape : true,
-          close : () => {
-            contentDialog.remove()
-          },
-          buttons : dialogBut
         }
-        if (ScriptUtil.version >= 2.0){
-          H5ControlUtil.H5Dialog.CreateDialogElement(contentDialog[0],dialogOption)
-        }else{
-          contentDialog.inforMessageDialog(dialogOption)
-        }
-        args.cancel = true
-        return; // The user should be allowed to go back
+      ]
+      const dialogOption = {
+        title: 'Information',
+        dialogType: 'General',
+        modal: true,
+        width: 600,
+        minHeight: 480,
+        icon: 'info',
+        closeOnEscape: true,
+        close: () => {
+          contentDialog.remove()
+        },
+        buttons: dialogBut
+      }
+      if (ScriptUtil.version >= 2.0) {
+        H5ControlUtil.H5Dialog.CreateDialogElement(contentDialog[0], dialogOption)
+      } else {
+        contentDialog.inforMessageDialog(dialogOption)
+      }
+      args.cancel = true
+      return; // The user should be allowed to go back
     }
-}
+  }
 
-private onRequested(args: RequestEventArgs): void {
+  private onRequested(args: RequestEventArgs): void {
     this.unsubscribeRequested();
     this.unsubscribeRequesting();
-}
+  }
 
   constructor(scriptArgs: IScriptArgs) {
     this.controller = scriptArgs.controller;
@@ -94,6 +97,8 @@ private onRequested(args: RequestEventArgs): void {
     this.BTNCLOSE_ID = "browse-btn-close";
     this.U_B = null;
     this.Q_B = null;
+    this.decimalFormat = ''
+    this.decimalLength = 0
   }
 
   public static Init(args: IScriptArgs) {
@@ -283,12 +288,26 @@ private onRequested(args: RequestEventArgs): void {
 
   private async run(): Promise<any> {
     console.info(
-      "1.0.2   12-12-2024    JOEL        Calcule en rendement"
+      "1.0.3   26-02-2025    JOEL        Ajout de la gestion des décimales"
     );
     //RG00 : Récupération argument en input
     const argument = this.argument.split(",");
     const tabFACI: any = argument[0].split("/");
     const tabORTY: any = argument[1].split("/");
+
+    //Récupération du séparateur de decimal
+    const request = new MIRequest();
+    request.program = "MNS150MI";
+    request.transaction = "GetUserData";
+    request.outputFields = ["DCFM"];
+    try {
+      //@ts-ignore
+      const response = await this.miService.executeRequestV2(request);
+      this.decimalFormat = response.item.DCFM;
+    } catch (e) {
+      console.error("Erreur lors de la récupération du format de decimal");
+    }
+
     await new Promise((resolve, reject) => {
       setTimeout(() => {
         resolve("");
@@ -300,15 +319,34 @@ private onRequested(args: RequestEventArgs): void {
     const WWPRNO = this.$host.find("#WWPRNO");
     const WWMFNO = this.$host.find("#WWMFNO");
 
+    //récupération du nombre de decimal
+    const request2 = new MIRequest();
+    request2.program = "MMS200MI";
+    request2.transaction = "GetItmBasic";
+    request2.record = { ITNO: WWPRNO.val() };
+    request2.outputFields = ["DCCD"];
+    try {
+      //@ts-ignore
+      const response2 = await this.miService.executeRequestV2(request2);
+      this.decimalLength = Number(response2.items[0].DCCD);
+    } catch (e) {
+      this.decimalLength = 0;
+      console.error("Erreur lors de la récupération du nombre de decimal");
+    }
+
     //VHORTY, VHELNO, VHSCOM from MWOHED where VHFACI = 'A01' and VHPRNO = 'Y10001' and VHMFNO = '0000000023'
     //MDBREAD - GetMWOHED00 - FACI PRNO MFNO
 
     if (tabFACI.includes(WAFACI.val())) {
-      this.unsubscribeRequesting = this.controller.Requesting.On((e : any) => {
+      //Vider le champ date de fin
+      this.$host.find("#WAFIDT").val("").trigger('change');
+      this.$host.find("#WAMFTI").val("").trigger('change');
+
+      this.unsubscribeRequesting = this.controller.Requesting.On((e: any) => {
         this.onRequesting(e);
       });
-      this.unsubscribeRequested = this.controller.Requested.On((e : any) => {
-          this.onRequested(e);
+      this.unsubscribeRequested = this.controller.Requested.On((e: any) => {
+        this.onRequested(e);
       });
       const req = new MIRequest();
       req.program = "MDBREADMI";
@@ -343,7 +381,7 @@ private onRequested(args: RequestEventArgs): void {
           this.addUniteLabel();
           this.addUniteTextBox();
         }
-      }else{
+      } else {
         this.addUniteLabel();
         this.addUniteTextBox();
       }
@@ -357,7 +395,6 @@ private onRequested(args: RequestEventArgs): void {
       }
 
       if (PROJ) {
-        console.log(PROJ)
         //@ts-ignore
         this.Q_B?.Value = PROJ;
         this.$host.find("Q_B").ready(() => {
@@ -416,8 +453,43 @@ private onRequested(args: RequestEventArgs): void {
                 });
               }
             }
+
           } catch (e) {
             console.error(`Erreur lors de l'appel API CRS050MI.Get on :`, item);
+          }
+        }
+
+        if (this.tabBatch.length == 0 && MFPC && MFPC.trim() != "") {
+          this.$host.find("#U_B").val('');
+          this.$host.find("#Q_B").ready(() => {
+            this.$host.find("#Q_B").val('');
+          });
+          try {
+            await new Promise((resolve, rejection) => {
+              setTimeout(() => {
+                resolve('')
+              }, 500);
+            })
+            const WAFACI = this.$host.find("#WAFACI");
+            const WWPRNO = this.$host.find("#WWPRNO");
+            const WWMFNO = this.$host.find("#WWMFNO");
+            const req = new MIRequest();
+            req.program = "PMS100MI";
+            req.transaction = "UpdMO";
+            req.record = {
+              FACI: WAFACI.val(),
+              PRNO: WWPRNO.val(),
+              MFNO: WWMFNO.val(),
+              PROJ: this.$host.find("#Q_B").val(),
+              ELNO: this.$host.find("#U_B").val(),
+            };
+            //@ts-ignore
+            await this.miService.executeRequestV2(req);
+            //@ts-ignore
+            this.controller.HideBusyIndicator();
+            return
+          } catch (err: any) {
+            console.error("Erreur PMS100MI.UpdMO : ", err);
           }
         }
 
@@ -463,43 +535,58 @@ private onRequested(args: RequestEventArgs): void {
   private async calculQS(BAQT: any, MFPC: any) {
     if (this.vDMCF_B == "1") {
       this.vORQA_temp =
-        (parseFloat(this.$host.find("#Q_B").val())
-          ? parseFloat(this.$host.find("#Q_B").val())
+        (parseFloat(this.$host.find("#Q_B").val().replace(',', '.'))
+          ? parseFloat(this.$host.find("#Q_B").val().replace(',', '.'))
           : 0) * parseFloat(this.vCOFA_B);
     }
     if (this.vDMCF_B == "2") {
       this.vORQA_temp =
-        (parseFloat(this.$host.find("#Q_B").val())
-          ? parseFloat(this.$host.find("#Q_B").val())
+        (parseFloat(this.$host.find("#Q_B").val().replace(',', '.'))
+          ? parseFloat(this.$host.find("#Q_B").val().replace(',', '.'))
           : 0) / parseFloat(this.vCOFA_B);
     }
     if (
-      this.vORQA_temp.toString().trim() !=
-      this.$host.find("#WWORQA").val().trim()
+      this.vORQA_temp.toString().trim().replace(',', '.') !=
+      this.$host.find("#WWORQA").val().trim().replace(',', '.')
     ) {
       this.$host.find("#WWORQA").ready(() => {
-        this.$host.find("#WWORQA").val(`${this.vORQA_temp}`);
+        this.$host.find("#WWORQA").val(`${this.vORQA_temp.toFixed(this.decimalLength).toString().replace(',', this.decimalFormat).replace('.', this.decimalFormat)}`);
       });
     }
 
     //gestion en mode Rendement
     if (parseFloat(BAQT) > 0 && (!MFPC || MFPC.trim() == "")) {
-      this.$host.find("#Q_B").ready(() => {
+      this.$host.find("#WWORQA").ready(() => {
         this.$host
           .find("#WWORQA")
           .val(
             `${Number(
               (
-                parseFloat(this.$host.find("#Q_B").val()) * parseFloat(BAQT)
-              ).toFixed(3)
-            )}`
+                parseFloat(this.$host.find("#Q_B").val().replace(',', '.')) * parseFloat(BAQT)
+              ).toFixed(this.decimalLength)
+            ).toString().replace(',', this.decimalFormat).replace('.', this.decimalFormat)}`
           );
       });
       this.$host.find("#U_B").val("");
     }
 
+    // if (this.tabBatch.length == 0 && MFPC.trim() != "") {
+    //   this.$host.find("#WWORQA").ready(() => {
+    //     this.$host
+    //       .find("#WWORQA")
+    //       .val(
+    //         `${Number(
+    //           (
+    //             parseFloat(this.$host.find("#Q_B").val()) * parseFloat(BAQT)
+    //           ).toFixed(this.decimalLength)
+    //         ).toString().replace(',',this.decimalFormat).replace('.',this.decimalFormat)}`
+    //       );
+    //   });
+    //   this.$host.find("#U_B").val("");
+    // }
+
     try {
-      await new Promise((resolve,rejection) => {
+      await new Promise((resolve, rejection) => {
         setTimeout(() => {
           resolve('')
         }, 500);
@@ -527,21 +614,21 @@ private onRequested(args: RequestEventArgs): void {
   private async calculQB(BAQT: any, MFPC: any) {
     if (this.vDMCF_B == "1") {
       this.vORQA_temp =
-        (parseFloat(this.$host.find("#WWORQA").val())
-          ? parseFloat(this.$host.find("#WWORQA").val())
+        (parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
+          ? parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
           : 0) / parseFloat(this.vCOFA_B);
     }
     if (this.vDMCF_B == "2") {
       this.vORQA_temp =
-        (parseFloat(this.$host.find("#WWORQA").val())
-          ? parseFloat(this.$host.find("#WWORQA").val())
+        (parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
+          ? parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
           : 0) * parseFloat(this.vCOFA_B);
     }
     if (
-      this.vORQA_temp.toString().trim() != this.$host.find("#Q_B").val().trim()
+      this.vORQA_temp.toString().trim().replace(',', '.') != this.$host.find("#Q_B").val().trim().replace(',', '.')
     ) {
       this.$host.find("#Q_B").ready(() => {
-        this.$host.find("#Q_B").val(`${Number(this.vORQA_temp.toFixed(3))}`);
+        this.$host.find("#Q_B").val(`${Number(this.vORQA_temp.toFixed(3)).toString().replace(',', this.decimalFormat).replace('.', this.decimalFormat)}`);
       });
     }
 
@@ -553,16 +640,32 @@ private onRequested(args: RequestEventArgs): void {
           .val(
             `${Number(
               (
-                parseFloat(this.$host.find("#WWORQA").val()) / parseFloat(BAQT)
+                parseFloat(this.$host.find("#WWORQA").val().replace(',', '.')) / parseFloat(BAQT)
               ).toFixed(3)
-            )}`
+            ).toString().replace(',', this.decimalFormat).replace('.', this.decimalFormat)}`
           );
       });
       this.$host.find("#U_B").val("");
     }
 
+    // if (this.tabBatch.length == 0 && MFPC.trim() != "") {
+
+    //   this.$host.find("#Q_B").ready(() => {
+    //     this.$host
+    //       .find("#Q_B")
+    //       .val(
+    //         `${Number(
+    //           (
+    //             parseFloat(this.$host.find("#WWORQA").val()) / parseFloat(BAQT)
+    //           )
+    //         ).toString().replace(',',this.decimalFormat).replace('.',this.decimalFormat)}`
+    //       );
+    //   });
+    //   this.$host.find("#U_B").val("");
+    // }
+
     try {
-      await new Promise((resolve,rejection) => {
+      await new Promise((resolve, rejection) => {
         setTimeout(() => {
           resolve('')
         }, 500);

@@ -59,6 +59,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
  * 1.0.0   25-10-2024    JOEL        Initial Release
  * 1.0.1   20-11-2024    JOEL        Ajustement spécifique suite utilisation PROJ et ELNO
  * 1.0.2   12-12-2024    JOEL        Calcule en rendement
+ * 1.0.3   26-02-2025    JOEL        Ajout de la gestion des décimales
  */
 var C04_PMS010E_ConvertBatchOF = /** @class */ (function () {
     function C04_PMS010E_ConvertBatchOF(scriptArgs) {
@@ -81,6 +82,8 @@ var C04_PMS010E_ConvertBatchOF = /** @class */ (function () {
         this.BTNCLOSE_ID = "browse-btn-close";
         this.U_B = null;
         this.Q_B = null;
+        this.decimalFormat = '';
+        this.decimalLength = 0;
     }
     C04_PMS010E_ConvertBatchOF.prototype.onRequesting = function (args) {
         if (args.commandType === "KEY" && args.commandValue === "F12") {
@@ -291,27 +294,65 @@ var C04_PMS010E_ConvertBatchOF = /** @class */ (function () {
     };
     C04_PMS010E_ConvertBatchOF.prototype.run = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var argument, tabFACI, tabORTY, WAFACI, WWPRNO, WWMFNO, req, ORTY, PROJ_1, MFPC_1, ELNO_1, BAQT_1, rep, e_1, MMS015Request, MMS015Response, items, _i, items_1, item, CRS050Request, CRS050Response, e_2, e_3;
+            var argument, tabFACI, tabORTY, request, response, e_1, WAFACI, WWPRNO, WWMFNO, request2, response2, e_2, req, ORTY, PROJ_1, MFPC_1, ELNO_1, BAQT_1, rep, e_3, MMS015Request, MMS015Response, items, _i, items_1, item, CRS050Request, CRS050Response, e_4, WAFACI_1, WWPRNO_1, WWMFNO_1, req_1, err_1, e_5;
             var _this = this;
             var _a, _b;
             return __generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
-                        console.info("1.0.2   12-12-2024    JOEL        Calcule en rendement");
+                        console.info("1.0.3   26-02-2025    JOEL        Ajout de la gestion des décimales");
                         argument = this.argument.split(",");
                         tabFACI = argument[0].split("/");
                         tabORTY = argument[1].split("/");
-                        return [4 /*yield*/, new Promise(function (resolve, reject) {
-                                setTimeout(function () {
-                                    resolve("");
-                                }, 1000);
-                            })];
+                        request = new MIRequest();
+                        request.program = "MNS150MI";
+                        request.transaction = "GetUserData";
+                        request.outputFields = ["DCFM"];
+                        _c.label = 1;
                     case 1:
+                        _c.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, this.miService.executeRequestV2(request)];
+                    case 2:
+                        response = _c.sent();
+                        this.decimalFormat = response.item.DCFM;
+                        return [3 /*break*/, 4];
+                    case 3:
+                        e_1 = _c.sent();
+                        console.error("Erreur lors de la récupération du format de decimal");
+                        return [3 /*break*/, 4];
+                    case 4: return [4 /*yield*/, new Promise(function (resolve, reject) {
+                            setTimeout(function () {
+                                resolve("");
+                            }, 1000);
+                        })];
+                    case 5:
                         _c.sent();
                         WAFACI = this.$host.find("#WAFACI");
                         WWPRNO = this.$host.find("#WWPRNO");
                         WWMFNO = this.$host.find("#WWMFNO");
-                        if (!tabFACI.includes(WAFACI.val())) return [3 /*break*/, 15];
+                        request2 = new MIRequest();
+                        request2.program = "MMS200MI";
+                        request2.transaction = "GetItmBasic";
+                        request2.record = { ITNO: WWPRNO.val() };
+                        request2.outputFields = ["DCCD"];
+                        _c.label = 6;
+                    case 6:
+                        _c.trys.push([6, 8, , 9]);
+                        return [4 /*yield*/, this.miService.executeRequestV2(request2)];
+                    case 7:
+                        response2 = _c.sent();
+                        this.decimalLength = Number(response2.items[0].DCCD);
+                        return [3 /*break*/, 9];
+                    case 8:
+                        e_2 = _c.sent();
+                        this.decimalLength = 0;
+                        console.error("Erreur lors de la récupération du nombre de decimal");
+                        return [3 /*break*/, 9];
+                    case 9:
+                        if (!tabFACI.includes(WAFACI.val())) return [3 /*break*/, 28];
+                        //Vider le champ date de fin
+                        this.$host.find("#WAFIDT").val("").trigger('change');
+                        this.$host.find("#WAMFTI").val("").trigger('change');
                         this.unsubscribeRequesting = this.controller.Requesting.On(function (e) {
                             _this.onRequesting(e);
                         });
@@ -328,23 +369,23 @@ var C04_PMS010E_ConvertBatchOF = /** @class */ (function () {
                         };
                         req.outputFields = ["ORTY", "PROJ", "MFPC", "ELNO", "BAQT"];
                         ORTY = void 0;
-                        _c.label = 2;
-                    case 2:
-                        _c.trys.push([2, 4, , 5]);
+                        _c.label = 10;
+                    case 10:
+                        _c.trys.push([10, 12, , 13]);
                         return [4 /*yield*/, this.miService.executeRequestV2(req)];
-                    case 3:
+                    case 11:
                         rep = _c.sent();
                         ORTY = rep.item["ORTY"];
                         PROJ_1 = rep.item["PROJ"];
                         MFPC_1 = rep.item["MFPC"];
                         ELNO_1 = rep.item["ELNO"];
                         BAQT_1 = rep.item["BAQT"];
-                        return [3 /*break*/, 5];
-                    case 4:
-                        e_1 = _c.sent();
+                        return [3 /*break*/, 13];
+                    case 12:
+                        e_3 = _c.sent();
                         console.error("erreur MDBREAMI");
                         return [2 /*return*/];
-                    case 5:
+                    case 13:
                         //if (ELNO == "" || !ELNO) return;
                         //RG02 : Création de 2 champs spécifiques
                         this.addQuantiteLabel();
@@ -367,7 +408,6 @@ var C04_PMS010E_ConvertBatchOF = /** @class */ (function () {
                             });
                         }
                         if (PROJ_1) {
-                            console.log(PROJ_1);
                             //@ts-ignore
                             (_b = this.Q_B) === null || _b === void 0 ? void 0 : _b.Value = PROJ_1;
                             this.$host.find("Q_B").ready(function () {
@@ -386,18 +426,18 @@ var C04_PMS010E_ConvertBatchOF = /** @class */ (function () {
                             NFTR: "2",
                         };
                         MMS015Request.outputFields = ["ALUN", "COFA", "DMCF", "AUS4"];
-                        _c.label = 6;
-                    case 6:
-                        _c.trys.push([6, 14, , 15]);
+                        _c.label = 14;
+                    case 14:
+                        _c.trys.push([14, 27, , 28]);
                         return [4 /*yield*/, this.miService.executeRequestV2(MMS015Request)];
-                    case 7:
+                    case 15:
                         MMS015Response = _c.sent();
                         items = MMS015Response.items;
                         this.tabBatch = [];
                         _i = 0, items_1 = items;
-                        _c.label = 8;
-                    case 8:
-                        if (!(_i < items_1.length)) return [3 /*break*/, 13];
+                        _c.label = 16;
+                    case 16:
+                        if (!(_i < items_1.length)) return [3 /*break*/, 21];
                         item = items_1[_i];
                         CRS050Request = new MIRequest();
                         CRS050Request.program = "CRS050MI";
@@ -406,11 +446,11 @@ var C04_PMS010E_ConvertBatchOF = /** @class */ (function () {
                             UNIT: item.ALUN,
                         };
                         CRS050Request.outputFields = ["UMCT", "TX40"];
-                        _c.label = 9;
-                    case 9:
-                        _c.trys.push([9, 11, , 12]);
+                        _c.label = 17;
+                    case 17:
+                        _c.trys.push([17, 19, , 20]);
                         return [4 /*yield*/, this.miService.executeRequestV2(CRS050Request)];
-                    case 10:
+                    case 18:
                         CRS050Response = _c.sent();
                         if (CRS050Response.item["UMCT"] == "2") {
                             this.tabBatch.push(__assign(__assign({}, item), { UMCT: CRS050Response.item["UMCT"], TX40: CRS050Response.item["TX40"] }));
@@ -426,15 +466,56 @@ var C04_PMS010E_ConvertBatchOF = /** @class */ (function () {
                                 });
                             }
                         }
-                        return [3 /*break*/, 12];
-                    case 11:
-                        e_2 = _c.sent();
+                        return [3 /*break*/, 20];
+                    case 19:
+                        e_4 = _c.sent();
                         console.error("Erreur lors de l'appel API CRS050MI.Get on :", item);
-                        return [3 /*break*/, 12];
-                    case 12:
+                        return [3 /*break*/, 20];
+                    case 20:
                         _i++;
-                        return [3 /*break*/, 8];
-                    case 13:
+                        return [3 /*break*/, 16];
+                    case 21:
+                        if (!(this.tabBatch.length == 0 && MFPC_1 && MFPC_1.trim() != "")) return [3 /*break*/, 26];
+                        this.$host.find("#U_B").val('');
+                        this.$host.find("#Q_B").ready(function () {
+                            _this.$host.find("#Q_B").val('');
+                        });
+                        _c.label = 22;
+                    case 22:
+                        _c.trys.push([22, 25, , 26]);
+                        return [4 /*yield*/, new Promise(function (resolve, rejection) {
+                                setTimeout(function () {
+                                    resolve('');
+                                }, 500);
+                            })];
+                    case 23:
+                        _c.sent();
+                        WAFACI_1 = this.$host.find("#WAFACI");
+                        WWPRNO_1 = this.$host.find("#WWPRNO");
+                        WWMFNO_1 = this.$host.find("#WWMFNO");
+                        req_1 = new MIRequest();
+                        req_1.program = "PMS100MI";
+                        req_1.transaction = "UpdMO";
+                        req_1.record = {
+                            FACI: WAFACI_1.val(),
+                            PRNO: WWPRNO_1.val(),
+                            MFNO: WWMFNO_1.val(),
+                            PROJ: this.$host.find("#Q_B").val(),
+                            ELNO: this.$host.find("#U_B").val(),
+                        };
+                        //@ts-ignore
+                        return [4 /*yield*/, this.miService.executeRequestV2(req_1)];
+                    case 24:
+                        //@ts-ignore
+                        _c.sent();
+                        //@ts-ignore
+                        this.controller.HideBusyIndicator();
+                        return [2 /*return*/];
+                    case 25:
+                        err_1 = _c.sent();
+                        console.error("Erreur PMS100MI.UpdMO : ", err_1);
+                        return [3 /*break*/, 26];
+                    case 26:
                         //RG06  : Promt F4
                         this.makeBrowserable(BAQT_1, MFPC_1);
                         //@ts-ignore
@@ -465,89 +546,17 @@ var C04_PMS010E_ConvertBatchOF = /** @class */ (function () {
                                 }
                             });
                         });
-                        return [3 /*break*/, 15];
-                    case 14:
-                        e_3 = _c.sent();
+                        return [3 /*break*/, 28];
+                    case 27:
+                        e_5 = _c.sent();
                         console.error("Erreur sur l'appel api MMS015MI.Lst");
-                        return [3 /*break*/, 15];
-                    case 15: return [2 /*return*/];
+                        return [3 /*break*/, 28];
+                    case 28: return [2 /*return*/];
                 }
             });
         });
     };
     C04_PMS010E_ConvertBatchOF.prototype.calculQS = function (BAQT, MFPC) {
-        return __awaiter(this, void 0, void 0, function () {
-            var WAFACI, WWPRNO, WWMFNO, req, err_1;
-            var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (this.vDMCF_B == "1") {
-                            this.vORQA_temp =
-                                (parseFloat(this.$host.find("#Q_B").val())
-                                    ? parseFloat(this.$host.find("#Q_B").val())
-                                    : 0) * parseFloat(this.vCOFA_B);
-                        }
-                        if (this.vDMCF_B == "2") {
-                            this.vORQA_temp =
-                                (parseFloat(this.$host.find("#Q_B").val())
-                                    ? parseFloat(this.$host.find("#Q_B").val())
-                                    : 0) / parseFloat(this.vCOFA_B);
-                        }
-                        if (this.vORQA_temp.toString().trim() !=
-                            this.$host.find("#WWORQA").val().trim()) {
-                            this.$host.find("#WWORQA").ready(function () {
-                                _this.$host.find("#WWORQA").val("".concat(_this.vORQA_temp));
-                            });
-                        }
-                        //gestion en mode Rendement
-                        if (parseFloat(BAQT) > 0 && (!MFPC || MFPC.trim() == "")) {
-                            this.$host.find("#Q_B").ready(function () {
-                                _this.$host
-                                    .find("#WWORQA")
-                                    .val("".concat(Number((parseFloat(_this.$host.find("#Q_B").val()) * parseFloat(BAQT)).toFixed(3))));
-                            });
-                            this.$host.find("#U_B").val("");
-                        }
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 4, , 5]);
-                        return [4 /*yield*/, new Promise(function (resolve, rejection) {
-                                setTimeout(function () {
-                                    resolve('');
-                                }, 500);
-                            })];
-                    case 2:
-                        _a.sent();
-                        WAFACI = this.$host.find("#WAFACI");
-                        WWPRNO = this.$host.find("#WWPRNO");
-                        WWMFNO = this.$host.find("#WWMFNO");
-                        req = new MIRequest();
-                        req.program = "PMS100MI";
-                        req.transaction = "UpdMO";
-                        req.record = {
-                            FACI: WAFACI.val(),
-                            PRNO: WWPRNO.val(),
-                            MFNO: WWMFNO.val(),
-                            PROJ: this.$host.find("#Q_B").val(),
-                            ELNO: this.$host.find("#U_B").val(),
-                        };
-                        //@ts-ignore
-                        return [4 /*yield*/, this.miService.executeRequestV2(req)];
-                    case 3:
-                        //@ts-ignore
-                        _a.sent();
-                        return [3 /*break*/, 5];
-                    case 4:
-                        err_1 = _a.sent();
-                        console.error("Erreur PMS100MI.UpdMO : ", err_1);
-                        return [3 /*break*/, 5];
-                    case 5: return [2 /*return*/];
-                }
-            });
-        });
-    };
-    C04_PMS010E_ConvertBatchOF.prototype.calculQB = function (BAQT, MFPC) {
         return __awaiter(this, void 0, void 0, function () {
             var WAFACI, WWPRNO, WWMFNO, req, err_2;
             var _this = this;
@@ -556,27 +565,28 @@ var C04_PMS010E_ConvertBatchOF = /** @class */ (function () {
                     case 0:
                         if (this.vDMCF_B == "1") {
                             this.vORQA_temp =
-                                (parseFloat(this.$host.find("#WWORQA").val())
-                                    ? parseFloat(this.$host.find("#WWORQA").val())
-                                    : 0) / parseFloat(this.vCOFA_B);
+                                (parseFloat(this.$host.find("#Q_B").val().replace(',', '.'))
+                                    ? parseFloat(this.$host.find("#Q_B").val().replace(',', '.'))
+                                    : 0) * parseFloat(this.vCOFA_B);
                         }
                         if (this.vDMCF_B == "2") {
                             this.vORQA_temp =
-                                (parseFloat(this.$host.find("#WWORQA").val())
-                                    ? parseFloat(this.$host.find("#WWORQA").val())
-                                    : 0) * parseFloat(this.vCOFA_B);
+                                (parseFloat(this.$host.find("#Q_B").val().replace(',', '.'))
+                                    ? parseFloat(this.$host.find("#Q_B").val().replace(',', '.'))
+                                    : 0) / parseFloat(this.vCOFA_B);
                         }
-                        if (this.vORQA_temp.toString().trim() != this.$host.find("#Q_B").val().trim()) {
-                            this.$host.find("#Q_B").ready(function () {
-                                _this.$host.find("#Q_B").val("".concat(Number(_this.vORQA_temp.toFixed(3))));
+                        if (this.vORQA_temp.toString().trim().replace(',', '.') !=
+                            this.$host.find("#WWORQA").val().trim().replace(',', '.')) {
+                            this.$host.find("#WWORQA").ready(function () {
+                                _this.$host.find("#WWORQA").val("".concat(_this.vORQA_temp.toFixed(_this.decimalLength).toString().replace(',', _this.decimalFormat).replace('.', _this.decimalFormat)));
                             });
                         }
                         //gestion en mode Rendement
                         if (parseFloat(BAQT) > 0 && (!MFPC || MFPC.trim() == "")) {
-                            this.$host.find("#Q_B").ready(function () {
+                            this.$host.find("#WWORQA").ready(function () {
                                 _this.$host
-                                    .find("#Q_B")
-                                    .val("".concat(Number((parseFloat(_this.$host.find("#WWORQA").val()) / parseFloat(BAQT)).toFixed(3))));
+                                    .find("#WWORQA")
+                                    .val("".concat(Number((parseFloat(_this.$host.find("#Q_B").val().replace(',', '.')) * parseFloat(BAQT)).toFixed(_this.decimalLength)).toString().replace(',', _this.decimalFormat).replace('.', _this.decimalFormat)));
                             });
                             this.$host.find("#U_B").val("");
                         }
@@ -612,6 +622,77 @@ var C04_PMS010E_ConvertBatchOF = /** @class */ (function () {
                     case 4:
                         err_2 = _a.sent();
                         console.error("Erreur PMS100MI.UpdMO : ", err_2);
+                        return [3 /*break*/, 5];
+                    case 5: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    C04_PMS010E_ConvertBatchOF.prototype.calculQB = function (BAQT, MFPC) {
+        return __awaiter(this, void 0, void 0, function () {
+            var WAFACI, WWPRNO, WWMFNO, req, err_3;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (this.vDMCF_B == "1") {
+                            this.vORQA_temp =
+                                (parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
+                                    ? parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
+                                    : 0) / parseFloat(this.vCOFA_B);
+                        }
+                        if (this.vDMCF_B == "2") {
+                            this.vORQA_temp =
+                                (parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
+                                    ? parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
+                                    : 0) * parseFloat(this.vCOFA_B);
+                        }
+                        if (this.vORQA_temp.toString().trim().replace(',', '.') != this.$host.find("#Q_B").val().trim().replace(',', '.')) {
+                            this.$host.find("#Q_B").ready(function () {
+                                _this.$host.find("#Q_B").val("".concat(Number(_this.vORQA_temp.toFixed(3)).toString().replace(',', _this.decimalFormat).replace('.', _this.decimalFormat)));
+                            });
+                        }
+                        //gestion en mode Rendement
+                        if (parseFloat(BAQT) > 0 && (!MFPC || MFPC.trim() == "")) {
+                            this.$host.find("#Q_B").ready(function () {
+                                _this.$host
+                                    .find("#Q_B")
+                                    .val("".concat(Number((parseFloat(_this.$host.find("#WWORQA").val().replace(',', '.')) / parseFloat(BAQT)).toFixed(3)).toString().replace(',', _this.decimalFormat).replace('.', _this.decimalFormat)));
+                            });
+                            this.$host.find("#U_B").val("");
+                        }
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 4, , 5]);
+                        return [4 /*yield*/, new Promise(function (resolve, rejection) {
+                                setTimeout(function () {
+                                    resolve('');
+                                }, 500);
+                            })];
+                    case 2:
+                        _a.sent();
+                        WAFACI = this.$host.find("#WAFACI");
+                        WWPRNO = this.$host.find("#WWPRNO");
+                        WWMFNO = this.$host.find("#WWMFNO");
+                        req = new MIRequest();
+                        req.program = "PMS100MI";
+                        req.transaction = "UpdMO";
+                        req.record = {
+                            FACI: WAFACI.val(),
+                            PRNO: WWPRNO.val(),
+                            MFNO: WWMFNO.val(),
+                            PROJ: this.$host.find("#Q_B").val(),
+                            ELNO: this.$host.find("#U_B").val(),
+                        };
+                        //@ts-ignore
+                        return [4 /*yield*/, this.miService.executeRequestV2(req)];
+                    case 3:
+                        //@ts-ignore
+                        _a.sent();
+                        return [3 /*break*/, 5];
+                    case 4:
+                        err_3 = _a.sent();
+                        console.error("Erreur PMS100MI.UpdMO : ", err_3);
                         return [3 /*break*/, 5];
                     case 5: return [2 /*return*/];
                 }

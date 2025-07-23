@@ -12,6 +12,8 @@
  * 1.0.0   22-10-2024    JOEL        Initial Release
  * 1.0.1   20-11-2024    JOEL        Ajustement spécifique suite utilisation PROJ et ELNO
  * 1.0.2   12-12-2024    JOEL        Calcule en rendement
+ * 1.0.3   26-02-2025    JOEL        Ajout de la gestion des décimales
+ * 1.0.4   23-07-2025    JOEL        Decocher Explosion
  */
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
@@ -79,6 +81,8 @@ var C04_PMS001E_ConvertBatchOF = /** @class */ (function () {
         this.vORQA_temp = 0;
         this.contentElement = this.controller.GetContentElement();
         this.tabBatch = [];
+        this.decimalFormat = '';
+        this.decimalLength = 0;
     }
     C04_PMS001E_ConvertBatchOF.Init = function (args) {
         new C04_PMS001E_ConvertBatchOF(args).run();
@@ -199,7 +203,7 @@ var C04_PMS001E_ConvertBatchOF = /** @class */ (function () {
     };
     C04_PMS001E_ConvertBatchOF.prototype.run = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var argument, tabFACI, tabORTY, WAORTY, WAFACI, WWPRNO_1, WAMFPC_1, MMS015Request, MMS015Response, items, _i, items_1, item, CRS050Request, CRS050Response, e_1, e_2;
+            var argument, tabFACI, tabORTY, request, response, e_1, WAORTY, WAFACI, WWPRNO, WAMFPC, request2, response2, e_2, MMS015Request, MMS015Response, items, _i, items_1, item, CRS050Request, CRS050Response, e_3, e_4;
             var _this = this;
             var _a;
             return __generator(this, function (_b) {
@@ -215,35 +219,78 @@ var C04_PMS001E_ConvertBatchOF = /** @class */ (function () {
                             })];
                     case 1:
                         _b.sent();
+                        request = new MIRequest();
+                        request.program = "MNS150MI";
+                        request.transaction = "GetUserData";
+                        request.outputFields = ["DCFM"];
+                        _b.label = 2;
+                    case 2:
+                        _b.trys.push([2, 4, , 5]);
+                        return [4 /*yield*/, this.miService.executeRequestV2(request)];
+                    case 3:
+                        response = _b.sent();
+                        this.decimalFormat = response.item.DCFM;
+                        return [3 /*break*/, 5];
+                    case 4:
+                        e_1 = _b.sent();
+                        console.error("Erreur lors de la récupération du format de decimal");
+                        return [3 /*break*/, 5];
+                    case 5:
                         WAORTY = this.$host.find("#WAORTY").val();
                         WAFACI = this.$host.find("#WAFACI").val();
-                        if (!(tabFACI.includes(WAFACI) && tabORTY.includes(WAORTY))) return [3 /*break*/, 11];
-                        console.info("1.0.2   12-12-2024    JOEL        Calcule en rendement");
-                        WWPRNO_1 = this.$host.find("#WWPRNO").val();
-                        WAMFPC_1 = (_a = this.$host.find("#WAMFPC")) === null || _a === void 0 ? void 0 : _a.val();
+                        this.$host.find("#WAPROJ").ready(function () {
+                            _this.$host.find("#WAPROJ").val(' ').trigger('input');
+                        });
+                        this.$host.find("#WAELNO").ready(function () {
+                            _this.$host.find("#WAELNO").val(' ').trigger('input');
+                        });
+                        if (!(tabFACI.includes(WAFACI) && tabORTY.includes(WAORTY))) return [3 /*break*/, 19];
+                        console.info("1.0.4   23-07-2025    JOEL        Decocher Explosion");
+                        this.controller.SetValue("WABDCD", false);
+                        WWPRNO = this.$host.find("#WWPRNO").val();
+                        WAMFPC = (_a = this.$host.find("#WAMFPC")) === null || _a === void 0 ? void 0 : _a.val();
+                        request2 = new MIRequest();
+                        request2.program = "MMS200MI";
+                        request2.transaction = "GetItmBasic";
+                        request2.record = { ITNO: WWPRNO };
+                        request2.outputFields = ["DCCD"];
+                        _b.label = 6;
+                    case 6:
+                        _b.trys.push([6, 8, , 9]);
+                        return [4 /*yield*/, this.miService.executeRequestV2(request2)];
+                    case 7:
+                        response2 = _b.sent();
+                        this.decimalLength = Number(response2.items[0].DCCD);
+                        return [3 /*break*/, 9];
+                    case 8:
+                        e_2 = _b.sent();
+                        this.decimalLength = 0;
+                        console.error("Erreur lors de la récupération du nombre de decimal");
+                        return [3 /*break*/, 9];
+                    case 9:
                         //@ts-ignore
                         this.controller.ShowBusyIndicator();
                         MMS015Request = new MIRequest();
                         MMS015Request.program = "MMS015MI";
                         MMS015Request.transaction = "Lst";
                         MMS015Request.record = {
-                            ITNO: (WAMFPC_1 === null || WAMFPC_1 === void 0 ? void 0 : WAMFPC_1.trim()) != "" ? WAMFPC_1 : WWPRNO_1,
+                            ITNO: (WAMFPC === null || WAMFPC === void 0 ? void 0 : WAMFPC.trim()) != "" ? WAMFPC : WWPRNO,
                             AUTP: "1",
                             NFTR: "2",
                         };
                         MMS015Request.outputFields = ["ALUN", "COFA", "DMCF", "AUS4"];
-                        _b.label = 2;
-                    case 2:
-                        _b.trys.push([2, 10, , 11]);
+                        _b.label = 10;
+                    case 10:
+                        _b.trys.push([10, 18, , 19]);
                         return [4 /*yield*/, this.miService.executeRequestV2(MMS015Request)];
-                    case 3:
+                    case 11:
                         MMS015Response = _b.sent();
                         items = MMS015Response.items;
                         this.tabBatch = [];
                         _i = 0, items_1 = items;
-                        _b.label = 4;
-                    case 4:
-                        if (!(_i < items_1.length)) return [3 /*break*/, 9];
+                        _b.label = 12;
+                    case 12:
+                        if (!(_i < items_1.length)) return [3 /*break*/, 17];
                         item = items_1[_i];
                         CRS050Request = new MIRequest();
                         CRS050Request.program = "CRS050MI";
@@ -252,11 +299,11 @@ var C04_PMS001E_ConvertBatchOF = /** @class */ (function () {
                             UNIT: item.ALUN,
                         };
                         CRS050Request.outputFields = ["UMCT", "TX40"];
-                        _b.label = 5;
-                    case 5:
-                        _b.trys.push([5, 7, , 8]);
+                        _b.label = 13;
+                    case 13:
+                        _b.trys.push([13, 15, , 16]);
                         return [4 /*yield*/, this.miService.executeRequestV2(CRS050Request)];
-                    case 6:
+                    case 14:
                         CRS050Response = _b.sent();
                         if (CRS050Response.item["UMCT"] == "2") {
                             this.tabBatch.push(__assign(__assign({}, item), { UMCT: CRS050Response.item["UMCT"], TX40: CRS050Response.item["TX40"] }));
@@ -268,17 +315,42 @@ var C04_PMS001E_ConvertBatchOF = /** @class */ (function () {
                                 this.calculQB();
                             }
                         }
-                        return [3 /*break*/, 8];
-                    case 7:
-                        e_1 = _b.sent();
+                        return [3 /*break*/, 16];
+                    case 15:
+                        e_3 = _b.sent();
                         console.error("Erreur lors de l'appel API CRS050MI.Get on :", item);
-                        return [3 /*break*/, 8];
-                    case 8:
+                        return [3 /*break*/, 16];
+                    case 16:
                         _i++;
-                        return [3 /*break*/, 4];
-                    case 9:
+                        return [3 /*break*/, 12];
+                    case 17:
                         /** Suppression des ecrans et sorti du script si aucun element dans tabBatch */
                         if (this.tabBatch.length == 0) {
+                            this.$host.find("#WAPROJ").ready(function () {
+                                _this.$host.find("#WAPROJ").val('').trigger('change');
+                            });
+                            this.$host.find("#WAELNO").ready(function () {
+                                _this.$host.find("#WAELNO").val('').trigger('change');
+                            });
+                            /*if (this.$host.find("#WAMFPC").val()?.trim() != "") {
+                              this.$host
+                                .find('div[componentname="WAELNO"]')
+                                .css({ display: "none" });
+                              this.$host.find("#btnLookup_WAPROJ").remove();
+                              //RG09 : Calcul Quantité UC OF
+                              this.$host.find("#WAPROJ").ready(() => {
+                                this.$host.find("#WAPROJ").on("change", () => {
+                                  this.calculQS();
+                                });
+                              });
+                  
+                              //RG10 : Calcul Quantité Batch OF
+                              this.$host.find("#WWORQA").ready(() => {
+                                this.$host.find("#WWORQA").on("change", () => {
+                                  this.calculQB();
+                                });
+                              });
+                            }*/
                             if ((parseFloat(this.$host.find("#WWBAQT").val()) > 0 &&
                                 this.$host.find("#WAMFPC").val() &&
                                 this.$host.find("#WAMFPC").val().trim() == "") ||
@@ -296,6 +368,11 @@ var C04_PMS001E_ConvertBatchOF = /** @class */ (function () {
                                         _this.calculQB();
                                     });
                                 });
+                                this.$host.find("#WAPROJ").ready(function () {
+                                    _this.$host.find("#WAPROJ").on("change", function () {
+                                        _this.calculQS();
+                                    });
+                                });
                                 this.$host.find("#WAPROJ").css({ "pointer-events": "none" });
                                 this.$host
                                     .find('div[componentname="WAELNO"]')
@@ -303,9 +380,15 @@ var C04_PMS001E_ConvertBatchOF = /** @class */ (function () {
                             }
                             else {
                                 //@ts-ignore
-                                this.contentElement.RemoveScriptComponents();
-                                //@ts-ignore
                                 this.controller.HideBusyIndicator();
+                                this.$host.find("#WAPROJ").ready(function () {
+                                    _this.$host.find("#WAPROJ").val(' ').trigger('change');
+                                });
+                                this.$host.find("#WAELNO").ready(function () {
+                                    _this.$host.find("#WAELNO").val(' ').trigger('change');
+                                });
+                                //@ts-ignore
+                                this.contentElement.RemoveScriptComponents();
                                 return [2 /*return*/];
                             }
                         }
@@ -338,84 +421,9 @@ var C04_PMS001E_ConvertBatchOF = /** @class */ (function () {
                             //RG08 : Recalcul tabBATCH
                             this.$host.find("#WAMFPC").ready(function () {
                                 _this.$host.find("#WAMFPC").on("change", function () { return __awaiter(_this, void 0, void 0, function () {
-                                    var MMS015Request, MMS015Response_1, items_3, _i, items_2, item, CRS050Request, CRS050Response, e_3, e_4;
                                     return __generator(this, function (_a) {
-                                        switch (_a.label) {
-                                            case 0:
-                                                if (parseFloat(this.$host.find("#WWBAQT").val()) > 0 &&
-                                                    this.$host.find("#WAMFPC").val().trim() == "") {
-                                                    this.$host.find("#WAPROJ").css({ "pointer-events": "none" });
-                                                    this.$host
-                                                        .find('div[componentname="WAELNO"]')
-                                                        .css({ display: "none" });
-                                                }
-                                                this.vCOFA_B = "0";
-                                                this.vDMCF_B = "0";
-                                                //@ts-ignore
-                                                this.controller.ShowBusyIndicator();
-                                                MMS015Request = new MIRequest();
-                                                MMS015Request.program = "MMS015MI";
-                                                MMS015Request.transaction = "Lst";
-                                                MMS015Request.record = {
-                                                    ITNO: WAMFPC_1.trim() != "" ? WAMFPC_1 : WWPRNO_1,
-                                                    AUTP: "1",
-                                                    NFTR: "2",
-                                                };
-                                                MMS015Request.outputFields = ["ALUN", "COFA", "DMCF", "AUS4"];
-                                                _a.label = 1;
-                                            case 1:
-                                                _a.trys.push([1, 9, , 10]);
-                                                return [4 /*yield*/, this.miService.executeRequestV2(MMS015Request)];
-                                            case 2:
-                                                MMS015Response_1 = _a.sent();
-                                                items_3 = MMS015Response_1.items;
-                                                this.tabBatch = [];
-                                                _i = 0, items_2 = items_3;
-                                                _a.label = 3;
-                                            case 3:
-                                                if (!(_i < items_2.length)) return [3 /*break*/, 8];
-                                                item = items_2[_i];
-                                                CRS050Request = new MIRequest();
-                                                CRS050Request.program = "CRS050MI";
-                                                CRS050Request.transaction = "Get";
-                                                CRS050Request.record = {
-                                                    UNIT: item.ALUN,
-                                                };
-                                                CRS050Request.outputFields = ["UMCT", "TX40"];
-                                                _a.label = 4;
-                                            case 4:
-                                                _a.trys.push([4, 6, , 7]);
-                                                return [4 /*yield*/, this.miService.executeRequestV2(CRS050Request)];
-                                            case 5:
-                                                CRS050Response = _a.sent();
-                                                if (CRS050Response.item["UMCT"] == "2") {
-                                                    this.tabBatch.push(__assign(__assign({}, item), { UMCT: CRS050Response.item["UMCT"], TX40: CRS050Response.item["TX40"] }));
-                                                    if (item["AUS4"] == "1") {
-                                                        this.vMAUN_B = item["ALUN"];
-                                                        this.vCOFA_B = item["COFA"];
-                                                        this.vDMCF_B = item["DMCF"];
-                                                        this.$host.find("#WAELNO").val(this.vMAUN_B);
-                                                        this.calculQB();
-                                                    }
-                                                }
-                                                return [3 /*break*/, 7];
-                                            case 6:
-                                                e_3 = _a.sent();
-                                                console.error("Erreur lors de l'appel API CRS050MI.Get sur le recalcule on :", item);
-                                                return [3 /*break*/, 7];
-                                            case 7:
-                                                _i++;
-                                                return [3 /*break*/, 3];
-                                            case 8: return [3 /*break*/, 10];
-                                            case 9:
-                                                e_4 = _a.sent();
-                                                console.error("Erreur lors du recalcule du tabBatch");
-                                                return [3 /*break*/, 10];
-                                            case 10:
-                                                //@ts-ignore
-                                                this.controller.HideBusyIndicator();
-                                                return [2 /*return*/];
-                                        }
+                                        console.log('ato');
+                                        return [2 /*return*/];
                                     });
                                 }); });
                             });
@@ -446,12 +454,12 @@ var C04_PMS001E_ConvertBatchOF = /** @class */ (function () {
                                 });
                             });
                         }
-                        return [3 /*break*/, 11];
-                    case 10:
-                        e_2 = _b.sent();
-                        console.error("Erreur lors de l'appel API MMS015MI.Lst ", e_2);
-                        return [3 /*break*/, 11];
-                    case 11: return [2 /*return*/];
+                        return [3 /*break*/, 19];
+                    case 18:
+                        e_4 = _b.sent();
+                        console.error("Erreur lors de l'appel API MMS015MI.Lst ", e_4);
+                        return [3 /*break*/, 19];
+                    case 19: return [2 /*return*/];
                 }
             });
         });
@@ -460,71 +468,102 @@ var C04_PMS001E_ConvertBatchOF = /** @class */ (function () {
         var _this = this;
         if (this.vDMCF_B == "1") {
             this.vORQA_temp =
-                (parseFloat(this.$host.find("#WAPROJ").val())
-                    ? parseFloat(this.$host.find("#WAPROJ").val())
-                    : 0) * parseFloat(this.vCOFA_B);
+                Number(((parseFloat(this.$host.find("#WAPROJ").val().replace(',', '.'))
+                    ? parseFloat(this.$host.find("#WAPROJ").val().replace(',', '.'))
+                    : 0) * parseFloat(this.vCOFA_B)).toFixed(this.decimalLength));
         }
         if (this.vDMCF_B == "2") {
             this.vORQA_temp =
-                (parseFloat(this.$host.find("#WAPROJ").val())
-                    ? parseFloat(this.$host.find("#WAPROJ").val())
-                    : 0) / parseFloat(this.vCOFA_B);
+                Number(((parseFloat(this.$host.find("#WAPROJ").val().replace(',', '.'))
+                    ? parseFloat(this.$host.find("#WAPROJ").val().replace(',', '.'))
+                    : 0) / parseFloat(this.vCOFA_B)).toFixed(this.decimalLength));
         }
-        if (this.vORQA_temp.toString().trim() !=
-            this.$host.find("#WWORQA").val().trim()) {
+        if (this.vORQA_temp.toString().trim().replace(',', '.') !=
+            this.$host.find("#WWORQA").val().trim().replace(',', '.')) {
             this.$host.find("#WWORQA").ready(function () {
-                _this.$host.find("#WWORQA").val("".concat(_this.vORQA_temp));
+                //const decimal = this.decimalFormat == ','?this.vORQA_temp
+                _this.$host.find("#WWORQA").val("".concat(_this.vORQA_temp.toString().replace(',', _this.decimalFormat).replace('.', _this.decimalFormat)));
             });
         }
         //gestion en mode Rendement
-        if ((parseFloat(this.$host.find("#WWBAQT").val()) > 0 &&
+        if ((parseFloat(this.$host.find("#WWBAQT").val().replace(',', '.')) > 0 &&
             this.$host.find("#WAMFPC").val() &&
             this.$host.find("#WAMFPC").val().trim() == "") ||
-            (parseFloat(this.$host.find("#WWBAQT").val()) > 0 &&
+            (parseFloat(this.$host.find("#WWBAQT").val().replace(',', '.')) > 0 &&
                 !this.$host.find("#WAMFPC").val())) {
             this.$host.find("#WWORQA").ready(function () {
                 _this.$host
                     .find("#WWORQA")
-                    .val("".concat(Number((parseFloat(_this.$host.find("#WAPROJ").val()) *
-                    parseFloat(_this.$host.find("#WWBAQT").val())).toFixed(3))));
+                    .val("".concat(Number((parseFloat(_this.$host.find("#WAPROJ").val().replace(',', '.')) *
+                    parseFloat(_this.$host.find("#WWBAQT").val().replace(',', '.'))).toFixed(_this.decimalLength)).toString().replace(',', _this.decimalFormat).replace('.', _this.decimalFormat)));
             });
             this.$host.find("#WAELNO").val("");
         }
+        /*if (this.tabBatch.length == 0 && this.$host.find("#WAMFPC").val().trim() != "") {
+          this.$host.find("#WWORQA").ready(() => {
+            this.$host
+              .find("#WWORQA")
+              .val(
+                `${Number(
+                  (
+                    parseFloat(this.$host.find("#WAPROJ").val().replace(',', '.')) *
+                    parseFloat(this.$host.find("#WWBAQT").val().replace(',', '.'))
+                  ).toFixed(this.decimalLength)
+                ).toString().replace(',', this.decimalFormat).replace('.', this.decimalFormat)}`
+              );
+          });
+          this.$host.find("#WAELNO").val("");
+        }*/
     };
     C04_PMS001E_ConvertBatchOF.prototype.calculQB = function () {
         var _this = this;
         if (this.vDMCF_B == "1") {
             this.vORQA_temp =
-                (parseFloat(this.$host.find("#WWORQA").val())
-                    ? parseFloat(this.$host.find("#WWORQA").val())
+                (parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
+                    ? parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
                     : 0) / parseFloat(this.vCOFA_B);
         }
         if (this.vDMCF_B == "2") {
             this.vORQA_temp =
-                (parseFloat(this.$host.find("#WWORQA").val())
-                    ? parseFloat(this.$host.find("#WWORQA").val())
+                (parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
+                    ? parseFloat(this.$host.find("#WWORQA").val().replace(',', '.'))
                     : 0) * parseFloat(this.vCOFA_B);
         }
-        if (this.vORQA_temp.toString().trim() !=
-            this.$host.find("#WAPROJ").val().trim()) {
+        if (this.vORQA_temp.toString().trim().replace(',', '.') !=
+            this.$host.find("#WAPROJ").val().trim().replace(',', '.')) {
             this.$host.find("#WAPROJ").ready(function () {
-                _this.$host.find("#WAPROJ").val("".concat(Number(_this.vORQA_temp.toFixed(3))));
+                _this.$host.find("#WAPROJ").val("".concat(Number(_this.vORQA_temp.toFixed(3)).toString().replace(',', _this.decimalFormat).replace('.', _this.decimalFormat)));
             });
         }
         //gestion en mode Rendement
-        if ((parseFloat(this.$host.find("#WWBAQT").val()) > 0 &&
+        if ((parseFloat(this.$host.find("#WWBAQT").val().replace(',', '.')) > 0 &&
             this.$host.find("#WAMFPC").val() &&
             this.$host.find("#WAMFPC").val().trim() == "") ||
-            (parseFloat(this.$host.find("#WWBAQT").val()) > 0 &&
+            (parseFloat(this.$host.find("#WWBAQT").val().replace(',', '.')) > 0 &&
                 !this.$host.find("#WAMFPC").val())) {
             this.$host.find("#WAPROJ").ready(function () {
                 _this.$host
                     .find("#WAPROJ")
                     .val("".concat(Number((parseFloat(_this.$host.find("#WWORQA").val()) /
-                    parseFloat(_this.$host.find("#WWBAQT").val())).toFixed(3))));
+                    parseFloat(_this.$host.find("#WWBAQT").val())).toFixed(3)).toString().replace(',', _this.decimalFormat).replace('.', _this.decimalFormat)));
             });
             this.$host.find("#WAELNO").val("");
         }
+        /*if (this.tabBatch.length == 0 && this.$host.find("#WAMFPC").val().trim() != "") {
+          this.$host.find("#WAPROJ").ready(() => {
+            this.$host
+              .find("#WAPROJ")
+              .val(
+                `${Number(
+                  (
+                    parseFloat(this.$host.find("#WWORQA").val()) /
+                    parseFloat(this.$host.find("#WWBAQT").val())
+                  )
+                ).toString().replace(',', this.decimalFormat).replace('.', this.decimalFormat)}`
+              );
+          });
+          this.$host.find("#WAELNO").val("");
+        }*/
     };
     return C04_PMS001E_ConvertBatchOF;
 }());

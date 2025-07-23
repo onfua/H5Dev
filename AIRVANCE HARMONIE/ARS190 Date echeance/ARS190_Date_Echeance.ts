@@ -42,6 +42,7 @@ class ARS190_Date_Echeance {
         SEPC : '$',
         QERY : `F1CONO, F1DIVI, F1JBNO, F1JBDT, F1JBTM, F1LITX from FSLGP1 where F1GPST = '0' and F1CONO = '${this.CONO}' and F1DIVI = '${this.DIVI}'`
       }
+      request.maxReturnedRecords = 0
       request.outputFields = ['REPL']
       try{
         //@ts-ignore
@@ -68,6 +69,7 @@ class ARS190_Date_Echeance {
                     SEPC : '$',
                     QERY : `F2CONO, F2DIVI, F2JBNO, F2JBDT, F2JBTM, F2GRPA from FSLGP2 where F2CONO = '${cono}' and F2DIVI = '${divi}' and F2JBNO = '${jbno}' and F2JBDT = '${jbdt}' and F2JBTM = '${jbtm}'`
                 }
+                request2.maxReturnedRecords = 0
                 try{
                     //@ts-ignore
                     const response2 = await this.miService.executeRequestV2(

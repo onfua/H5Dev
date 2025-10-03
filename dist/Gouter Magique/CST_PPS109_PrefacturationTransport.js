@@ -253,16 +253,23 @@ var CST_PPS109_PrefacturationTransport = /** @class */ (function () {
                         rbv1 = this.$host.find("#WERBV1").val() ? this.$host.find("#WERBV1").val() : "";
                         rbv2 = this.$host.find("#WERBV2").val() ? this.$host.find("#WERBV2").val() : "";
                         req = new MIRequest();
-                        req.program = "CUSEXTMI";
-                        req.transaction = 'LstAlphaKPI';
+                        // req.program = "CUSEXTMI";
+                        // req.transaction = 'LstAlphaKPI';
+                        // req.record = {
+                        //     KPID: 'MPAGRF',
+                        //     PK01: suno,
+                        //     PK02: agnb,
+                        //     PK03: rafd,
+                        //     PK04: rbv1,
+                        //     PK05: rbv2
+                        // }
+                        req.program = "EXPORTMI";
+                        req.transaction = 'Select';
                         req.record = {
-                            KPID: 'MPAGRF',
-                            PK01: suno,
-                            PK02: agnb,
-                            PK03: rafd,
-                            PK04: rbv1,
-                            PK05: rbv2
+                            SEPC: ';',
+                            QERY: "F3PK06, F3PK07, F3A030 from CUGEX3 where F3KPID = 'MPAGRF' and F3PK01 = '".concat(suno, "' and F3PK02 = '").concat(agnb, "' and F3PK03 = '").concat(rafd, "' and F3PK04 = '").concat(rbv1, "' and F3PK05 = '").concat(rbv2, "' and F3A030 = '1'"),
                         };
+                        req.maxReturnedRecords = 0;
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 3, , 4]);
@@ -270,7 +277,14 @@ var CST_PPS109_PrefacturationTransport = /** @class */ (function () {
                     case 2:
                         res = _b.sent();
                         // console.log(res.items)
-                        return [2 /*return*/, res.items];
+                        return [2 /*return*/, res.items.map(function (item) {
+                                var tmp = item['REPL'].split(';');
+                                return {
+                                    PK06: tmp[0],
+                                    PK07: tmp[1],
+                                    AL30: tmp[2]
+                                };
+                            })];
                     case 3:
                         _a = _b.sent();
                         return [2 /*return*/, []];

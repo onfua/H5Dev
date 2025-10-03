@@ -132,7 +132,7 @@ class C04_PMS230B_SommeBatchOF {
         this.grid.onSelectedRowsChanged.subscribe(handler);
 
         //btnSequencer
-        this.$host.find("#BtnSequencer").on("click", (e: Event) => {
+        this.$host.find("#BtnSequencer").on("click", async (e: Event) => {
           e.preventDefault();
           let seq = 0;
           const tmp = this.grid.getData();
@@ -141,10 +141,46 @@ class C04_PMS230B_SommeBatchOF {
             item.VOSCHS = seq.toString();
             return item;
           });
-          this.grid.setData(result);
+          // this.grid.setData(result);
+          const columnId = 'VOSCHS';
+          const list = ListControl.ListView.GetDatagrid(this.controller);
+          const contents = list.getData().filter((item: any) => item.MMITDS);
+          const len = ScriptUtil.version >= 2.0 ? contents.length : contents.getLength();
+
+
+
+          for (let i = 0; i < len; i++) {
+            // get the column Id letter (C1, C2 ...)
+            let clId = "";
+            const clName = columnId.substr(columnId.length - 4);
+            list.getColumns().forEach(function (column) {
+              if (column.name == clName) {
+                clId = column.colId;
+              }
+            });
+            // set changed data
+            var key = "R" + (i + 1) + clId;
+            //@ts-ignore
+            list.editedCells[key] = { oldValue: "", newValue: result[i].VOSCHS };
+            // set displayed data
+            const data = list.getData()[i];
+            data[columnId] = result[i].VOSCHS;
+          }
+
+
           this.$host.find('#XT_0168').click()
         });
       }
     }
+  }
+
+  private updateRowCell(list: any, gridData: any, columns: any, rowNumber: any, columnName: any, clValue: any) {
+    let clId = ''
+    const clName = columnName.substr(columnName.length - 4)
+    columns.forEach((col: any) => {
+      if (col.name == clName) {
+        clId = columnName.colId
+      }
+    })
   }
 }

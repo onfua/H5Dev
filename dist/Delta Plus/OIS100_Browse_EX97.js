@@ -217,7 +217,7 @@ var OIS100_Browse_EX97 = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         columns = [
-                            { id: "CUCCAC", field: "CUGCAC", name: "Activity", filterType: "text" },
+                            { id: "CUCCAC", field: "CUCCAC", name: "Activity", filterType: "text" },
                             { id: "CUCUCH", field: "CUCUCH", name: "Cust channel ID", filterType: "text" },
                             { id: "CUDECU", field: "CUDECU", name: "Deliv customer", filterType: "text" },
                             { id: "OKCUNM", field: "OKCUNM", name: "Name Deliv Cust", filterType: "text" },
@@ -353,7 +353,7 @@ var OIS100_Browse_EX97 = /** @class */ (function () {
                                                 R1CUNM: e["R1CUNM"],
                                                 CUPYNO: e["CUPYNO"],
                                                 P1CUNM: e["P1CUNM"],
-                                                CUGCAC: e["CUGCAC"],
+                                                CUCCAC: e["CUCCAC"],
                                                 CUCUCH: e["CUCUCH"],
                                                 OKCSCD: e["OKCSCD"],
                                                 P1PYGR: e["P1PYGR"],

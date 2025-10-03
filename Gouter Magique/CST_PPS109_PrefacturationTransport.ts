@@ -184,22 +184,36 @@ class CST_PPS109_PrefacturationTransport {
         const rbv2 = this.$host.find("#WERBV2").val() ? this.$host.find("#WERBV2").val() : "";
 
         const req = new MIRequest();
-        req.program = "CUSEXTMI";
-        req.transaction = 'LstAlphaKPI';
+        // req.program = "CUSEXTMI";
+        // req.transaction = 'LstAlphaKPI';
+        // req.record = {
+        //     KPID: 'MPAGRF',
+        //     PK01: suno,
+        //     PK02: agnb,
+        //     PK03: rafd,
+        //     PK04: rbv1,
+        //     PK05: rbv2
+        // }
+        req.program = "EXPORTMI";
+        req.transaction = 'Select';
         req.record = {
-            KPID: 'MPAGRF',
-            PK01: suno,
-            PK02: agnb,
-            PK03: rafd,
-            PK04: rbv1,
-            PK05: rbv2
+            SEPC : ';',
+            QERY : `F3PK06, F3PK07, F3A030 from CUGEX3 where F3KPID = 'MPAGRF' and F3PK01 = '${suno}' and F3PK02 = '${agnb}' and F3PK03 = '${rafd}' and F3PK04 = '${rbv1}' and F3PK05 = '${rbv2}' and F3A030 = '1'`,
         }
+        req.maxReturnedRecords = 0;
 
         try {
             //@ts-ignore
             const res = await this.miService.executeRequestV2(req);
             // console.log(res.items)
-            return res.items
+            return res.items.map((item : any) => {
+                const tmp = item['REPL'].split(';');
+                return {
+                    PK06: tmp[0],
+                    PK07: tmp[1],
+                    AL30: tmp[2]
+                }
+            })
         } catch {
             return [];
         }

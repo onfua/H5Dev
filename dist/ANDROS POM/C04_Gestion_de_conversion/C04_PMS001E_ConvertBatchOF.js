@@ -219,6 +219,7 @@ var C04_PMS001E_ConvertBatchOF = /** @class */ (function () {
                             })];
                     case 1:
                         _b.sent();
+                        this.controller.SetValue("WABDCD", false);
                         request = new MIRequest();
                         request.program = "MNS150MI";
                         request.transaction = "GetUserData";

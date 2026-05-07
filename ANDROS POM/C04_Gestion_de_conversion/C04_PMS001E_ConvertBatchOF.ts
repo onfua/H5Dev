@@ -199,7 +199,7 @@ class C04_PMS001E_ConvertBatchOF {
       }, 500);
     });
 
-    
+    this.controller.SetValue("WABDCD", false);
 
     //Récupération du séparateur de decimal
     const request = new MIRequest();

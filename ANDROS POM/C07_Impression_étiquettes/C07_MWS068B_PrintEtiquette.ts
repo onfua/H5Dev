@@ -103,7 +103,7 @@ class C07_MWS068B_PrintEtiquette {
                     this.showMessage(res.errorMessage, 'error');
                     return;
                 }
-                
+
                 this.showMessage('Impression réussi', 'success');
             } catch {
                 this.showMessage('Erreur lors de l\'impression', 'error');
@@ -408,20 +408,30 @@ class C07_MWS068B_PrintEtiquette {
             PRTF: 'ETIQUETTE',
             MEDC: '*PRT'
         };
-        request.outputFields = ["DEV1", "PRFT"];
+        request.outputFields = ["DEV1", "PRFT", "USID"];
         try {
             //@ts-ignore
             const response = await this.miService.executeRequestV2(request);
             const { items } = response;
             const resultat = items.map((item: any) => {
                 return {
-                    DEV1: item["DEV1"]
+                    DEV1: item["DEV1"],
+                    USID: item["USID"]
                 };
             });
+            const filtred = resultat.filter((i: any) => i.USID === ScriptUtil.GetUserContext('USID'));
+            const notFilterd = resultat.filter((i: any) => !i.USID);
 
-            $("#" + this.DATAGRID_ID)
-                .data("datagrid")
-                .updateDataset(resultat);
+            if (filtred.length > 0) {
+                $("#" + this.DATAGRID_ID)
+                    .data("datagrid")
+                    .updateDataset(filtred);
+            } else {
+                $("#" + this.DATAGRID_ID)
+                    .data("datagrid")
+                    .updateDataset(notFilterd);
+            }
+
         } catch (e: any) {
             console.error("Error on fetching printer");
         }

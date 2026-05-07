@@ -379,7 +379,7 @@ var C07_MWS068B_PrintEtiquette = /** @class */ (function () {
     };
     C07_MWS068B_PrintEtiquette.prototype.fetchPrinter = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var columns, selectedField, request, response, items, resultat, e_1;
+            var columns, selectedField, request, response, items, resultat, filtred, notFilterd, e_1;
             var _this_1 = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -413,7 +413,7 @@ var C07_MWS068B_PrintEtiquette = /** @class */ (function () {
                             PRTF: 'ETIQUETTE',
                             MEDC: '*PRT'
                         };
-                        request.outputFields = ["DEV1", "PRFT"];
+                        request.outputFields = ["DEV1", "PRFT", "USID"];
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
@@ -423,12 +423,22 @@ var C07_MWS068B_PrintEtiquette = /** @class */ (function () {
                         items = response.items;
                         resultat = items.map(function (item) {
                             return {
-                                DEV1: item["DEV1"]
+                                DEV1: item["DEV1"],
+                                USID: item["USID"]
                             };
                         });
-                        $("#" + this.DATAGRID_ID)
-                            .data("datagrid")
-                            .updateDataset(resultat);
+                        filtred = resultat.filter(function (i) { return i.USID === ScriptUtil.GetUserContext('USID'); });
+                        notFilterd = resultat.filter(function (i) { return !i.USID; });
+                        if (filtred.length > 0) {
+                            $("#" + this.DATAGRID_ID)
+                                .data("datagrid")
+                                .updateDataset(filtred);
+                        }
+                        else {
+                            $("#" + this.DATAGRID_ID)
+                                .data("datagrid")
+                                .updateDataset(notFilterd);
+                        }
                         return [3 /*break*/, 4];
                     case 3:
                         e_1 = _a.sent();

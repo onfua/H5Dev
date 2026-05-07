@@ -68,11 +68,13 @@ var CST_PPS109_PrefacturationTransport = /** @class */ (function () {
     };
     CST_PPS109_PrefacturationTransport.prototype.run = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var list, _a, _b, customColumnNum, _c, _d, contents, len, _e, observateur, i, columnId, cell;
-            var _this = this;
+            var panel, list, _a, _b, customColumnNum, _c, _d, contents, len, _e;
             return __generator(this, function (_f) {
                 switch (_f.label) {
                     case 0:
+                        panel = this.controller.GetPanelName();
+                        if (!panel.includes('E'))
+                            return [2 /*return*/];
                         //@ts-ignore
                         this.controller.ShowBusyIndicator();
                         list = ListControl.ListView.GetDatagrid(this.controller);
@@ -120,91 +122,11 @@ var CST_PPS109_PrefacturationTransport = /** @class */ (function () {
                         return [3 /*break*/, 12];
                     case 12:
                         if (this.mode == '2') {
-                            observateur = new MutationObserver(function (mutationsList) { return __awaiter(_this, void 0, void 0, function () {
-                                var _i, mutationsList_1, mutation, columnId, dataset, suno, agnb, rafd, rbv1, rbv2, i, cell, value, data, tfValue, req, e_1;
-                                var _a, _b, _c;
-                                return __generator(this, function (_d) {
-                                    switch (_d.label) {
-                                        case 0:
-                                            _i = 0, mutationsList_1 = mutationsList;
-                                            _d.label = 1;
-                                        case 1:
-                                            if (!(_i < mutationsList_1.length)) return [3 /*break*/, 10];
-                                            mutation = mutationsList_1[_i];
-                                            if (!(mutation.type === 'characterData' || mutation.type === 'childList')) return [3 /*break*/, 9];
-                                            if (!(mutation.target.tagName == 'SPAN' && mutation.removedNodes.length > 0)) return [3 /*break*/, 9];
-                                            //@ts-ignore
-                                            this.controller.ShowBusyIndicator();
-                                            columnId = 'TFOF';
-                                            dataset = list.getData();
-                                            suno = this.$host.find("#WESUNO").val() ? this.$host.find("#WESUNO").val() : "";
-                                            agnb = this.$host.find("#WEAGNB").val() ? this.$host.find("#WEAGNB").val() : "";
-                                            rafd = this.$host.find("#WERAFD").val() ? this.getDateFormatted(this.$host.find("#WERAFD").val()) : "";
-                                            rbv1 = this.$host.find("#WERBV1").val() ? this.$host.find("#WERBV1").val() : "";
-                                            rbv2 = this.$host.find("#WERBV2").val() ? this.$host.find("#WERBV2").val() : "";
-                                            i = 0;
-                                            _d.label = 2;
-                                        case 2:
-                                            if (!(i < len)) return [3 /*break*/, 8];
-                                            cell = list.getCellElement(i, columnId);
-                                            value = (_a = cell.querySelector('span')) === null || _a === void 0 ? void 0 : _a.innerText;
-                                            if (!(value === null || value === void 0 ? void 0 : value.trim()))
-                                                return [3 /*break*/, 7];
-                                            data = dataset[i];
-                                            tfValue = value.trim() === 'OUI' ? '1' : '0';
-                                            req = new MIRequest();
-                                            req.program = "EXT109MI";
-                                            req.transaction = 'AddOrUpdForfait';
-                                            req.record = {
-                                                SUNO: suno,
-                                                AGNB: agnb,
-                                                RAFD: rafd,
-                                                RBV1: rbv1,
-                                                RBV2: rbv2,
-                                                FRQT: parseFloat(((_b = data.WSFRQT) === null || _b === void 0 ? void 0 : _b.replace(',', '.')) || '0'),
-                                                FRRA: parseFloat(((_c = data.WSFRRA) === null || _c === void 0 ? void 0 : _c.replace(',', '.')) || '0'),
-                                                TFOF: tfValue // 1 pour OUI, 0 pour NON
-                                            };
-                                            _d.label = 3;
-                                        case 3:
-                                            _d.trys.push([3, 5, , 6]);
-                                            //@ts-ignore
-                                            return [4 /*yield*/, this.miService.executeRequestV2(req)];
-                                        case 4:
-                                            //@ts-ignore
-                                            _d.sent();
-                                            return [3 /*break*/, 6];
-                                        case 5:
-                                            e_1 = _d.sent();
-                                            console.error(e_1);
-                                            return [3 /*break*/, 6];
-                                        case 6:
-                                            //@ts-ignore
-                                            this.controller.HideBusyIndicator();
-                                            _d.label = 7;
-                                        case 7:
-                                            i++;
-                                            return [3 /*break*/, 2];
-                                        case 8: return [3 /*break*/, 10];
-                                        case 9:
-                                            _i++;
-                                            return [3 /*break*/, 1];
-                                        case 10: return [2 /*return*/];
-                                    }
-                                });
-                            }); });
-                            for (i = 0; i < len; i++) {
-                                columnId = 'TFOF';
-                                cell = list.getCellElement(i, columnId);
-                                observateur.observe(cell, {
-                                    childList: true,
-                                    subtree: true,
-                                    characterData: true
-                                });
-                            }
+                            this.modeEdit(list, len);
                         }
                         //@ts-ignore
                         this.controller.HideBusyIndicator();
+                        this.attachEvent(list);
                         return [2 /*return*/];
                 }
             });
@@ -250,8 +172,8 @@ var CST_PPS109_PrefacturationTransport = /** @class */ (function () {
                         suno = this.$host.find("#WESUNO").val() ? this.$host.find("#WESUNO").val() : "";
                         agnb = this.$host.find("#WEAGNB").val() ? this.$host.find("#WEAGNB").val() : "";
                         rafd = this.$host.find("#WERAFD").val() ? this.getDateFormatted(this.$host.find("#WERAFD").val()) : "";
-                        rbv1 = this.$host.find("#WERBV1").val() ? this.$host.find("#WERBV1").val() : "";
-                        rbv2 = this.$host.find("#WERBV2").val() ? this.$host.find("#WERBV2").val() : "";
+                        rbv1 = this.$host.find("#WERBV1").val() ? this.$host.find("#WERBV1").val() : "?";
+                        rbv2 = this.$host.find("#WERBV2").val() ? this.$host.find("#WERBV2").val() : "?";
                         req = new MIRequest();
                         // req.program = "CUSEXTMI";
                         // req.transaction = 'LstAlphaKPI';
@@ -345,7 +267,7 @@ var CST_PPS109_PrefacturationTransport = /** @class */ (function () {
     };
     CST_PPS109_PrefacturationTransport.prototype.getDateFormat = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var req, res, e_2;
+            var req, res, e_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -360,8 +282,8 @@ var CST_PPS109_PrefacturationTransport = /** @class */ (function () {
                         res = _a.sent();
                         return [2 /*return*/, res.item["DTFM"]];
                     case 3:
-                        e_2 = _a.sent();
-                        console.error(e_2);
+                        e_1 = _a.sent();
+                        console.error(e_1);
                         return [2 /*return*/, 'YMD']; // Default format if error occurs
                     case 4: return [2 /*return*/];
                 }
@@ -379,6 +301,138 @@ var CST_PPS109_PrefacturationTransport = /** @class */ (function () {
         }
         else { //MDY
             return "20".concat(date.substring(6, 8)).concat(date.substring(0, 2)).concat(date.substring(3, 5)); // Default case, return as is
+        }
+    };
+    CST_PPS109_PrefacturationTransport.prototype.attachEvent = function (list) {
+        var _this = this;
+        this.unsubscribeReqCompleted = this.controller.RequestCompleted.On(function (e) { return __awaiter(_this, void 0, void 0, function () {
+            var contents, len, _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        if (!(e.commandType === "PAGE" && e.commandValue === "DOWN")) return [3 /*break*/, 5];
+                        contents = list.getData().filter(function (item) { return item.WSFRQT || item.WSFRRA; });
+                        len = ScriptUtil.version >= 2.0 ? contents.length : contents.getLength();
+                        _b.label = 1;
+                    case 1:
+                        _b.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, this.manageTaux(list, len)];
+                    case 2:
+                        _b.sent();
+                        return [3 /*break*/, 4];
+                    case 3:
+                        _a = _b.sent();
+                        //@ts-ignore
+                        this.controller.HideBusyIndicator();
+                        return [3 /*break*/, 4];
+                    case 4:
+                        if (this.mode == '2') {
+                            this.modeEdit(list, len);
+                        }
+                        return [3 /*break*/, 6];
+                    case 5:
+                        this.detachEvents();
+                        _b.label = 6;
+                    case 6: return [2 /*return*/];
+                }
+            });
+        }); });
+    };
+    CST_PPS109_PrefacturationTransport.prototype.detachEvents = function () {
+        this.unsubscribeReqCompleted();
+    };
+    CST_PPS109_PrefacturationTransport.prototype.modeEdit = function (list, len) {
+        var _this = this;
+        //Observateur du changement dans la colonne Taux Forfaitaire
+        var observateur = new MutationObserver(function (mutationsList) { return __awaiter(_this, void 0, void 0, function () {
+            var _i, mutationsList_1, mutation, columnId, dataset, suno, agnb, rafd, rbv1, rbv2, i, cell, value, oldValue, data, tfValue, req, e_2;
+            var _a, _b, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
+                    case 0:
+                        _i = 0, mutationsList_1 = mutationsList;
+                        _d.label = 1;
+                    case 1:
+                        if (!(_i < mutationsList_1.length)) return [3 /*break*/, 10];
+                        mutation = mutationsList_1[_i];
+                        if (!(mutation.type === 'characterData' || mutation.type === 'childList')) return [3 /*break*/, 9];
+                        //if (mutation.target.tagName == 'SPAN' && mutation.removedNodes.length > 0) {
+                        //@ts-ignore
+                        this.controller.ShowBusyIndicator();
+                        columnId = 'TFOF';
+                        dataset = list.getData();
+                        suno = this.$host.find("#WESUNO").val() ? this.$host.find("#WESUNO").val() : "";
+                        agnb = this.$host.find("#WEAGNB").val() ? this.$host.find("#WEAGNB").val() : "";
+                        rafd = this.$host.find("#WERAFD").val() ? this.getDateFormatted(this.$host.find("#WERAFD").val()) : "";
+                        rbv1 = this.$host.find("#WERBV1").val() ? this.$host.find("#WERBV1").val() : "?";
+                        rbv2 = this.$host.find("#WERBV2").val() ? this.$host.find("#WERBV2").val() : "?";
+                        i = 0;
+                        _d.label = 2;
+                    case 2:
+                        if (!(i < len)) return [3 /*break*/, 8];
+                        cell = list.getCellElement(i, columnId);
+                        value = (_a = cell.querySelector('span')) === null || _a === void 0 ? void 0 : _a.innerText;
+                        if (!(value === null || value === void 0 ? void 0 : value.trim()))
+                            return [3 /*break*/, 7];
+                        oldValue = dataset[i][columnId];
+                        data = dataset[i];
+                        tfValue = value.trim() === 'OUI' ? '1' : '0';
+                        if (oldValue === value.trim())
+                            return [3 /*break*/, 7];
+                        req = new MIRequest();
+                        req.program = "EXT109MI";
+                        req.transaction = 'AddOrUpdForfait';
+                        req.record = {
+                            SUNO: suno,
+                            AGNB: agnb,
+                            RAFD: rafd,
+                            RBV1: rbv1,
+                            RBV2: rbv2,
+                            FRQT: parseFloat(((_b = data.WSFRQT) === null || _b === void 0 ? void 0 : _b.replace(',', '.')) || '0'),
+                            FRRA: parseFloat(((_c = data.WSFRRA) === null || _c === void 0 ? void 0 : _c.replace(',', '.')) || '0'),
+                            TFOF: tfValue // 1 pour OUI, 0 pour NON
+                        };
+                        _d.label = 3;
+                    case 3:
+                        _d.trys.push([3, 5, , 6]);
+                        //@ts-ignore
+                        return [4 /*yield*/, this.miService.executeRequestV2(req)];
+                    case 4:
+                        //@ts-ignore
+                        _d.sent();
+                        return [3 /*break*/, 6];
+                    case 5:
+                        e_2 = _d.sent();
+                        console.error(e_2);
+                        return [3 /*break*/, 6];
+                    case 6:
+                        //@ts-ignore
+                        this.controller.HideBusyIndicator();
+                        _d.label = 7;
+                    case 7:
+                        i++;
+                        return [3 /*break*/, 2];
+                    case 8:
+                        //break;
+                        //@ts-ignore
+                        this.controller.HideBusyIndicator();
+                        _d.label = 9;
+                    case 9:
+                        _i++;
+                        return [3 /*break*/, 1];
+                    case 10: return [2 /*return*/];
+                }
+            });
+        }); });
+        for (var i = 0; i < len; i++) {
+            var columnId = 'TFOF';
+            //@ts-ignore
+            var cell = list.getCellElement(i, columnId);
+            observateur.observe(cell, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
         }
     };
     return CST_PPS109_PrefacturationTransport;

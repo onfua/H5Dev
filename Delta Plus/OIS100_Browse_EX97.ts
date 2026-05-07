@@ -36,12 +36,15 @@ class OIS100_Browse_EX97 {
     }
 
     private async getAllData(tab: any) {
+        const OACUNO = $('.is-visible #OACUNO')//this.$host.find('#OACUNO');
+        // console.log('OACUNO :',OACUNO.val(), OACUNO);
+        
         const request = new MIRequest();
         request.program = "CMS100MI";
         request.transaction = "LstEX97_CCUCHAO";
         request.record = {
-            F_ORCU: this.controller.GetValue("OACUNO"),
-            T_ORCU: this.controller.GetValue("OACUNO"),
+            F_ORCU: OACUNO.val(),//this.controller.GetValue("OACUNO"),
+            T_ORCU: OACUNO.val() //this.controller.GetValue("OACUNO"),
         };
         try {
             //@ts-ignore
@@ -58,7 +61,31 @@ class OIS100_Browse_EX97 {
     }
 
     private run() {
+        // // simulate pressing the Escape key to close any open modal/dialog
+        // try {
+        //     const escDown = $.Event("keydown", {
+        //         key: "Tab",
+        //         code: "Tab",
+        //         keyCode: 9,
+        //         which: 9,
+        //         bubbles: true,
+        //         cancelable: true,
+        //     });
+        //     const escUp = $.Event("keyup", {
+        //         key: "Tab",
+        //         code: "Tab",
+        //         keyCode: 9,
+        //         which: 9,
+        //         bubbles: true,
+        //         cancelable: true,
+        //     });
 
+        //     $(document).trigger(escDown);
+        //     // small pause to emulate a real key press
+        //     setTimeout(() => $(document).trigger(escUp), 10);
+        // } catch (e) {
+        //     console.warn("Failed to simulate Escape key press", e);
+        // }
         // Création de l'observateur
         const observer = new MutationObserver(mutations => {
             mutations.forEach(mutation => {
@@ -115,10 +142,12 @@ class OIS100_Browse_EX97 {
             return tr.querySelector('td:first-child')?.textContent?.trim() || '';
         })
 
-        await this.getAllData(tabDelCust);
+        
 
 
-        button.on('click', () => {
+        button.on('click', async () => {
+            // console.log('OACUNO :',this.controller.GetValue("OACUNO"));
+            await this.getAllData(tabDelCust);
             this.showBrowseDialog();
             this.fetchData(modalContent);
         })
@@ -182,7 +211,7 @@ class OIS100_Browse_EX97 {
             { id: "OKTOWN", field: "OKTOWN", name: "Ville Deliv Cust", filterType: "text" },
             
             { id: "OKCSCD", field: "OKCSCD", name: "Pays Deliv Cust", filterType: "text" },
-            { id: "CUINRC", field: "CUINRC", name: "Code facturé", filterType: "text" },
+            { id: "CUINR1", field: "CUINR1", name: "Code facturé", filterType: "text" },
             { id: "R1CUNM", field: "R1CUNM", name: "Nom facturé", filterType: "text" },
             { id: "CUPYNO", field: "CUPYNO", name: "Code client payer", filterType: "text" },
             { id: "P1CUNM", field: "P1CUNM", name: "Name Payer", filterType: "text" },
@@ -227,7 +256,7 @@ class OIS100_Browse_EX97 {
                 const trs = modalContent.querySelectorAll('div.modal-body-wrapper .datagrid-wrapper table tbody tr');
                 let find = false
                 for (const tr of trs) {
-                    if ((tr as HTMLElement).innerText.includes(args[0].data[selectedField]) && (tr as HTMLElement).innerText.includes(args[0].data['CUGCAC']) && (tr as HTMLElement).innerText.includes(args[0].data['CUINRC'])) {
+                    if ((tr as HTMLElement).innerText.includes(args[0].data[selectedField]) && (tr as HTMLElement).innerText.includes(args[0].data['CUGCAC']) && (tr as HTMLElement).innerText.includes(args[0].data['CUINR1'])) {
                         const tmp = (tr as HTMLElement)
                         find = true
                         $(tmp).find('td')[0].click();
@@ -274,7 +303,7 @@ class OIS100_Browse_EX97 {
                 OKCUA3: e["OKCUA3"],
                 OKTOWN: e["OKTOWN"],
                 OKPONO: e["OKPONO"],
-                CUINRC: e["CUINRC"],
+                CUINR1: e["CUINR1"],
                 R1CUNM: e["R1CUNM"],
                 CUPYNO: e["CUPYNO"],
                 P1CUNM: e["P1CUNM"],

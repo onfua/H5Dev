@@ -20,6 +20,7 @@ class CST_PPS109_PrefacturationTransport {
     private taux: any = [];
     private mode: string;
     private dateFormat: string;
+    private unsubscribeReqCompleted: any;
 
     constructor(scriptArgs: IScriptArgs) {
         this.controller = scriptArgs.controller;
@@ -39,6 +40,8 @@ class CST_PPS109_PrefacturationTransport {
     }
 
     private async run() {
+        const panel = this.controller.GetPanelName();
+        if (!panel.includes('E')) return;
         //@ts-ignore
         this.controller.ShowBusyIndicator();
         const list = ListControl.ListView.GetDatagrid(this.controller);
@@ -46,7 +49,7 @@ class CST_PPS109_PrefacturationTransport {
         //recuparation du format de date de l'utilisateur
         try {
             this.dateFormat = await this.getDateFormat();
-        } catch{}
+        } catch { }
 
         //Ajout de la colonne Taux Forfaitaire
         const customColumnNum = list.getColumns().length + 1;
@@ -71,72 +74,17 @@ class CST_PPS109_PrefacturationTransport {
             this.controller.HideBusyIndicator();
         }
 
+
+
         if (this.mode == '2') {
-            //Observateur du changement dans la colonne Taux Forfaitaire
-            const observateur = new MutationObserver( async (mutationsList: any) => {
-                for (const mutation of mutationsList) {
-                    if (mutation.type === 'characterData' || mutation.type === 'childList') {
-                        if (mutation.target.tagName == 'SPAN' && mutation.removedNodes.length > 0) {
-                            //@ts-ignore
-                            this.controller.ShowBusyIndicator();
-                            const columnId = 'TFOF';
-                            const dataset: any[] = list.getData();
-
-                            const suno = this.$host.find("#WESUNO").val() ? this.$host.find("#WESUNO").val() : "";
-                            const agnb = this.$host.find("#WEAGNB").val() ? this.$host.find("#WEAGNB").val() : "";
-                            const rafd = this.$host.find("#WERAFD").val() ? this.getDateFormatted(this.$host.find("#WERAFD").val()) : "";
-                            const rbv1 = this.$host.find("#WERBV1").val() ? this.$host.find("#WERBV1").val() : "";
-                            const rbv2 = this.$host.find("#WERBV2").val() ? this.$host.find("#WERBV2").val() : "";
-                            for (let i = 0; i < len; i++) {
-                                //@ts-ignore
-                                const cell = list.getCellElement(i, columnId) as HTMLElement;
-                                const value = cell.querySelector('span')?.innerText
-                                if (!value?.trim()) continue;
-                                const data = dataset[i];
-                                const tfValue = value.trim() === 'OUI' ? '1' : '0';
-                                const req = new MIRequest();
-                                req.program = "EXT109MI";
-                                req.transaction = 'AddOrUpdForfait';
-                                req.record = {
-                                    SUNO: suno,
-                                    AGNB: agnb,
-                                    RAFD: rafd,
-                                    RBV1: rbv1,
-                                    RBV2: rbv2,
-                                    FRQT: parseFloat(data.WSFRQT?.replace(',', '.') || '0'),
-                                    FRRA: parseFloat(data.WSFRRA?.replace(',', '.') || '0'),
-                                    TFOF: tfValue // 1 pour OUI, 0 pour NON
-                                };
-                                try {
-                                    //@ts-ignore
-                                    await this.miService.executeRequestV2(req);
-                                } catch (e) {
-                                    console.error(e);
-                                }
-                                //@ts-ignore
-                                this.controller.HideBusyIndicator();
-                            }
-                            break;
-                        }
-                    }
-                }
-            })
-
-            for (let i = 0; i < len; i++) {
-                const columnId = 'TFOF';
-                //@ts-ignore
-                const cell = list.getCellElement(i, columnId) as HTMLElement;
-                observateur.observe(cell, {
-                    childList: true,
-                    subtree: true,
-                    characterData: true
-                });
-            }
+            this.modeEdit(list, len);
         }
+
+
 
         //@ts-ignore
         this.controller.HideBusyIndicator();
-
+        this.attachEvent(list);
         // console.log(list.getColumns())
         // console.log(contents)
     }
@@ -180,8 +128,8 @@ class CST_PPS109_PrefacturationTransport {
         const suno = this.$host.find("#WESUNO").val() ? this.$host.find("#WESUNO").val() : "";
         const agnb = this.$host.find("#WEAGNB").val() ? this.$host.find("#WEAGNB").val() : "";
         const rafd = this.$host.find("#WERAFD").val() ? this.getDateFormatted(this.$host.find("#WERAFD").val()) : "";
-        const rbv1 = this.$host.find("#WERBV1").val() ? this.$host.find("#WERBV1").val() : "";
-        const rbv2 = this.$host.find("#WERBV2").val() ? this.$host.find("#WERBV2").val() : "";
+        const rbv1 = this.$host.find("#WERBV1").val() ? this.$host.find("#WERBV1").val() : "?";
+        const rbv2 = this.$host.find("#WERBV2").val() ? this.$host.find("#WERBV2").val() : "?";
 
         const req = new MIRequest();
         // req.program = "CUSEXTMI";
@@ -197,8 +145,8 @@ class CST_PPS109_PrefacturationTransport {
         req.program = "EXPORTMI";
         req.transaction = 'Select';
         req.record = {
-            SEPC : ';',
-            QERY : `F3PK06, F3PK07, F3A030 from CUGEX3 where F3KPID = 'MPAGRF' and F3PK01 = '${suno}' and F3PK02 = '${agnb}' and F3PK03 = '${rafd}' and F3PK04 = '${rbv1}' and F3PK05 = '${rbv2}' and F3A030 = '1'`,
+            SEPC: ';',
+            QERY: `F3PK06, F3PK07, F3A030 from CUGEX3 where F3KPID = 'MPAGRF' and F3PK01 = '${suno}' and F3PK02 = '${agnb}' and F3PK03 = '${rafd}' and F3PK04 = '${rbv1}' and F3PK05 = '${rbv2}' and F3A030 = '1'`,
         }
         req.maxReturnedRecords = 0;
 
@@ -206,7 +154,7 @@ class CST_PPS109_PrefacturationTransport {
             //@ts-ignore
             const res = await this.miService.executeRequestV2(req);
             // console.log(res.items)
-            return res.items.map((item : any) => {
+            return res.items.map((item: any) => {
                 const tmp = item['REPL'].split(';');
                 return {
                     PK06: tmp[0],
@@ -281,6 +229,102 @@ class CST_PPS109_PrefacturationTransport {
             return `20${date.substring(6, 8)}${date.substring(3, 5)}${date.substring(0, 2)}`;
         } else { //MDY
             return `20${date.substring(6, 8)}${date.substring(0, 2)}${date.substring(3, 5)}`; // Default case, return as is
+        }
+    }
+
+    private attachEvent(list: IActiveGrid) {
+        this.unsubscribeReqCompleted = this.controller.RequestCompleted.On(async (e: any) => {
+            //Populate additional data on scroll
+            if (e.commandType === "PAGE" && e.commandValue === "DOWN") {
+                const contents = list.getData().filter((item: any) => item.WSFRQT || item.WSFRRA);
+
+                //Gérer la nouvelle colonne Taux Forfaitaire par rapport aux données du tableau
+                const len = ScriptUtil.version >= 2.0 ? contents.length : contents.getLength();
+                try {
+                    await this.manageTaux(list, len);
+                } catch {
+                    //@ts-ignore
+                    this.controller.HideBusyIndicator();
+                }
+                if (this.mode == '2') {
+                    this.modeEdit(list, len);
+                }
+            } else {
+                this.detachEvents();
+            }
+
+        })
+    }
+
+    private detachEvents() {
+        this.unsubscribeReqCompleted();
+    }
+
+    private modeEdit(list: IActiveGrid, len: number) {
+        //Observateur du changement dans la colonne Taux Forfaitaire
+        const observateur = new MutationObserver(async (mutationsList: any) => {
+            for (const mutation of mutationsList) {
+                if (mutation.type === 'characterData' || mutation.type === 'childList') {
+                    //if (mutation.target.tagName == 'SPAN' && mutation.removedNodes.length > 0) {
+
+                    //@ts-ignore
+                    this.controller.ShowBusyIndicator();
+                    const columnId = 'TFOF';
+                    const dataset: any[] = list.getData();
+
+                    const suno = this.$host.find("#WESUNO").val() ? this.$host.find("#WESUNO").val() : "";
+                    const agnb = this.$host.find("#WEAGNB").val() ? this.$host.find("#WEAGNB").val() : "";
+                    const rafd = this.$host.find("#WERAFD").val() ? this.getDateFormatted(this.$host.find("#WERAFD").val()) : "";
+                    const rbv1 = this.$host.find("#WERBV1").val() ? this.$host.find("#WERBV1").val() : "?";
+                    const rbv2 = this.$host.find("#WERBV2").val() ? this.$host.find("#WERBV2").val() : "?";
+                    for (let i = 0; i < len; i++) {
+                        //@ts-ignore
+                        const cell = list.getCellElement(i, columnId) as HTMLElement;
+                        const value = cell.querySelector('span')?.innerText
+                        if (!value?.trim()) continue;
+                        const oldValue = dataset[i][columnId];
+                        const data = dataset[i];
+                        const tfValue = value.trim() === 'OUI' ? '1' : '0';
+                        if (oldValue === value.trim()) continue;
+                        const req = new MIRequest();
+                        req.program = "EXT109MI";
+                        req.transaction = 'AddOrUpdForfait';
+                        req.record = {
+                            SUNO: suno,
+                            AGNB: agnb,
+                            RAFD: rafd,
+                            RBV1: rbv1,
+                            RBV2: rbv2,
+                            FRQT: parseFloat(data.WSFRQT?.replace(',', '.') || '0'),
+                            FRRA: parseFloat(data.WSFRRA?.replace(',', '.') || '0'),
+                            TFOF: tfValue // 1 pour OUI, 0 pour NON
+                        };
+                        try {
+                            //@ts-ignore
+                            await this.miService.executeRequestV2(req);
+                        } catch (e) {
+                            console.error(e);
+                        }
+                        //@ts-ignore
+                        this.controller.HideBusyIndicator();
+                    }
+                    //break;
+                    //@ts-ignore
+                    this.controller.HideBusyIndicator();
+                    //}
+                }
+            }
+        })
+
+        for (let i = 0; i < len; i++) {
+            const columnId = 'TFOF';
+            //@ts-ignore
+            const cell = list.getCellElement(i, columnId) as HTMLElement;
+            observateur.observe(cell, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
         }
     }
 }

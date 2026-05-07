@@ -68,16 +68,18 @@ var OIS100_Browse_EX97 = /** @class */ (function () {
     };
     OIS100_Browse_EX97.prototype.getAllData = function (tab) {
         return __awaiter(this, void 0, void 0, function () {
-            var request, response, e_1;
+            var OACUNO, request, response, e_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        OACUNO = $('.is-visible #OACUNO') //this.$host.find('#OACUNO');
+                        ;
                         request = new MIRequest();
                         request.program = "CMS100MI";
                         request.transaction = "LstEX97_CCUCHAO";
                         request.record = {
-                            F_ORCU: this.controller.GetValue("OACUNO"),
-                            T_ORCU: this.controller.GetValue("OACUNO"),
+                            F_ORCU: OACUNO.val(), //this.controller.GetValue("OACUNO"),
+                            T_ORCU: OACUNO.val() //this.controller.GetValue("OACUNO"),
                         };
                         _a.label = 1;
                     case 1:
@@ -102,7 +104,31 @@ var OIS100_Browse_EX97 = /** @class */ (function () {
         });
     };
     OIS100_Browse_EX97.prototype.run = function () {
+        // // simulate pressing the Escape key to close any open modal/dialog
+        // try {
+        //     const escDown = $.Event("keydown", {
+        //         key: "Tab",
+        //         code: "Tab",
+        //         keyCode: 9,
+        //         which: 9,
+        //         bubbles: true,
+        //         cancelable: true,
+        //     });
+        //     const escUp = $.Event("keyup", {
+        //         key: "Tab",
+        //         code: "Tab",
+        //         keyCode: 9,
+        //         which: 9,
+        //         bubbles: true,
+        //         cancelable: true,
+        //     });
         var _this = this;
+        //     $(document).trigger(escDown);
+        //     // small pause to emulate a real key press
+        //     setTimeout(() => $(document).trigger(escUp), 10);
+        // } catch (e) {
+        //     console.warn("Failed to simulate Escape key press", e);
+        // }
         // Création de l'observateur
         var observer = new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
@@ -130,47 +156,52 @@ var OIS100_Browse_EX97 = /** @class */ (function () {
             var menu, $menu, button, trs, tabDelCust;
             var _this = this;
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (this.btnExist) {
-                            return [2 /*return*/];
-                        }
-                        menu = modalContent.querySelector('div.modal-body-wrapper #btn-grp .upperButtons');
-                        $menu = $(menu);
-                        if (document.getElementById('btnShowMore')) {
-                            return [2 /*return*/];
-                        }
-                        button = $('<button>', {
-                            text: 'Show More Information',
-                            id: 'btnShowMore',
-                        });
-                        $menu.append(button);
-                        button.css({
-                            'width': '90px',
-                            'padding-top': '3px',
-                            'padding-bottom': '3px',
-                            'background-color': 'transparent',
-                            'border-radius': '8px',
-                            'color': '#0054b1',
-                            'border': '1px solid #0054b1',
-                            'font-weight': 'bold',
-                            'font-size': '15px',
-                        });
-                        trs = modalContent.querySelectorAll('div.modal-body-wrapper .datagrid-wrapper table tbody tr');
-                        tabDelCust = Array.from(trs).map(function (tr) {
-                            var _a, _b;
-                            return ((_b = (_a = tr.querySelector('td:first-child')) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim()) || '';
-                        });
-                        return [4 /*yield*/, this.getAllData(tabDelCust)];
-                    case 1:
-                        _a.sent();
-                        button.on('click', function () {
-                            _this.showBrowseDialog();
-                            _this.fetchData(modalContent);
-                        });
-                        this.btnExist = true;
-                        return [2 /*return*/];
+                if (this.btnExist) {
+                    return [2 /*return*/];
                 }
+                menu = modalContent.querySelector('div.modal-body-wrapper #btn-grp .upperButtons');
+                $menu = $(menu);
+                if (document.getElementById('btnShowMore')) {
+                    return [2 /*return*/];
+                }
+                button = $('<button>', {
+                    text: 'Show More Information',
+                    id: 'btnShowMore',
+                });
+                $menu.append(button);
+                button.css({
+                    'width': '90px',
+                    'padding-top': '3px',
+                    'padding-bottom': '3px',
+                    'background-color': 'transparent',
+                    'border-radius': '8px',
+                    'color': '#0054b1',
+                    'border': '1px solid #0054b1',
+                    'font-weight': 'bold',
+                    'font-size': '15px',
+                });
+                trs = modalContent.querySelectorAll('div.modal-body-wrapper .datagrid-wrapper table tbody tr');
+                tabDelCust = Array.from(trs).map(function (tr) {
+                    var _a, _b;
+                    return ((_b = (_a = tr.querySelector('td:first-child')) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim()) || '';
+                });
+                button.on('click', function () { return __awaiter(_this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: 
+                            // console.log('OACUNO :',this.controller.GetValue("OACUNO"));
+                            return [4 /*yield*/, this.getAllData(tabDelCust)];
+                            case 1:
+                                // console.log('OACUNO :',this.controller.GetValue("OACUNO"));
+                                _a.sent();
+                                this.showBrowseDialog();
+                                this.fetchData(modalContent);
+                                return [2 /*return*/];
+                        }
+                    });
+                }); });
+                this.btnExist = true;
+                return [2 /*return*/];
             });
         });
     };
@@ -227,7 +258,7 @@ var OIS100_Browse_EX97 = /** @class */ (function () {
                             { id: "OKPONO", field: "OKPONO", name: "CP Deliv Cust", filterType: "text" },
                             { id: "OKTOWN", field: "OKTOWN", name: "Ville Deliv Cust", filterType: "text" },
                             { id: "OKCSCD", field: "OKCSCD", name: "Pays Deliv Cust", filterType: "text" },
-                            { id: "CUINRC", field: "CUINRC", name: "Code facturé", filterType: "text" },
+                            { id: "CUINR1", field: "CUINR1", name: "Code facturé", filterType: "text" },
                             { id: "R1CUNM", field: "R1CUNM", name: "Nom facturé", filterType: "text" },
                             { id: "CUPYNO", field: "CUPYNO", name: "Code client payer", filterType: "text" },
                             { id: "P1CUNM", field: "P1CUNM", name: "Name Payer", filterType: "text" },
@@ -291,7 +322,7 @@ var OIS100_Browse_EX97 = /** @class */ (function () {
                                         find = false;
                                         for (_i = 0, trs_1 = trs; _i < trs_1.length; _i++) {
                                             tr = trs_1[_i];
-                                            if (tr.innerText.includes(args[0].data[selectedField]) && tr.innerText.includes(args[0].data['CUGCAC']) && tr.innerText.includes(args[0].data['CUINRC'])) {
+                                            if (tr.innerText.includes(args[0].data[selectedField]) && tr.innerText.includes(args[0].data['CUGCAC']) && tr.innerText.includes(args[0].data['CUINR1'])) {
                                                 tmp = tr;
                                                 find = true;
                                                 $(tmp).find('td')[0].click();
@@ -349,7 +380,7 @@ var OIS100_Browse_EX97 = /** @class */ (function () {
                                                 OKCUA3: e["OKCUA3"],
                                                 OKTOWN: e["OKTOWN"],
                                                 OKPONO: e["OKPONO"],
-                                                CUINRC: e["CUINRC"],
+                                                CUINR1: e["CUINR1"],
                                                 R1CUNM: e["R1CUNM"],
                                                 CUPYNO: e["CUPYNO"],
                                                 P1CUNM: e["P1CUNM"],
